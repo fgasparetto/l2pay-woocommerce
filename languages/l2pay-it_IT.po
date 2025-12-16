@@ -1,0 +1,272 @@
+# Italian translation for L2Pay
+msgid ""
+msgstr ""
+"Project-Id-Version: L2Pay Gateway 1.0.0\n"
+"Language: it_IT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "L2Pay Gateway requires WooCommerce to be installed and active."
+msgstr "L2Pay Gateway richiede che WooCommerce sia installato e attivo."
+
+msgid "Settings"
+msgstr "Impostazioni"
+
+msgid "Connect MetaMask"
+msgstr "Connetti MetaMask"
+
+msgid "Pay with ETH"
+msgstr "Paga con ETH"
+
+msgid "Pay with USDC"
+msgstr "Paga con USDC"
+
+msgid "Processing..."
+msgstr "Elaborazione..."
+
+msgid "Approving USDC..."
+msgstr "Approvazione USDC..."
+
+msgid "Waiting for confirmation..."
+msgstr "In attesa di conferma..."
+
+msgid "Payment complete!"
+msgstr "Pagamento completato!"
+
+msgid "Please install MetaMask to pay with crypto"
+msgstr "Installa MetaMask per pagare con crypto"
+
+msgid "Please switch network"
+msgstr "Cambia rete"
+
+msgid "Transaction failed. Please try again."
+msgstr "Transazione fallita. Riprova."
+
+msgid "Error getting price. Please try again."
+msgstr "Errore nel recupero del prezzo. Riprova."
+
+msgid "Merchant wallet not configured. Please contact store owner."
+msgstr "Wallet del commerciante non configurato. Contatta il proprietario del negozio."
+
+msgid "Insufficient USDC balance"
+msgstr "Saldo USDC insufficiente"
+
+msgid "L2Pay (ETH & USDC)"
+msgstr "L2Pay (ETH e USDC)"
+
+msgid "Accept ETH and USDC payments via MetaMask. Payments are processed through a smart contract on multiple blockchains."
+msgstr "Accetta pagamenti ETH e USDC tramite MetaMask. I pagamenti vengono elaborati tramite smart contract su diverse blockchain."
+
+msgid "Enable/Disable"
+msgstr "Abilita/Disabilita"
+
+msgid "Enable L2Pay Gateway"
+msgstr "Abilita L2Pay Gateway"
+
+msgid "Title"
+msgstr "Titolo"
+
+msgid "This controls the title which the user sees during checkout."
+msgstr "Questo controlla il titolo che l'utente vede durante il checkout."
+
+msgid "Pay with Crypto (MetaMask)"
+msgstr "Paga con Crypto (MetaMask)"
+
+msgid "Description"
+msgstr "Descrizione"
+
+msgid "This controls the description which the user sees during checkout."
+msgstr "Questo controlla la descrizione che l'utente vede durante il checkout."
+
+msgid "Pay securely with ETH or USDC via MetaMask."
+msgstr "Paga in sicurezza con ETH o USDC tramite MetaMask."
+
+msgid "Merchant Settings"
+msgstr "Impostazioni Commerciante"
+
+msgid "Configure your merchant wallet address."
+msgstr "Configura l'indirizzo del tuo wallet commerciante."
+
+msgid "Wallet Address"
+msgstr "Indirizzo Wallet"
+
+msgid "Your Ethereum wallet address where you will receive payments."
+msgstr "Il tuo indirizzo wallet Ethereum dove riceverai i pagamenti."
+
+msgid "Advanced Settings"
+msgstr "Impostazioni Avanzate"
+
+msgid "Additional configuration options."
+msgstr "Opzioni di configurazione aggiuntive."
+
+msgid "Price Margin (%)"
+msgstr "Margine Prezzo (%)"
+
+msgid "Add a margin to the ETH price to account for price volatility during transaction confirmation. Default: 2%"
+msgstr "Aggiungi un margine al prezzo ETH per compensare la volatilità durante la conferma della transazione. Predefinito: 2%"
+
+msgid "Price Cache Duration (seconds)"
+msgstr "Durata Cache Prezzo (secondi)"
+
+msgid "How long to cache the ETH price. Lower values = more accurate but more API calls. Default: 60 seconds"
+msgstr "Per quanto tempo memorizzare il prezzo ETH. Valori più bassi = più preciso ma più chiamate API. Predefinito: 60 secondi"
+
+msgid "Debug Mode"
+msgstr "Modalità Debug"
+
+msgid "Enable debug logging"
+msgstr "Abilita log di debug"
+
+msgid "Log payment events and errors for debugging."
+msgstr "Registra eventi di pagamento ed errori per il debug."
+
+msgid "Network Mode"
+msgstr "Modalità Rete"
+
+msgid "Choose between test networks (for development) or live networks (for real payments)."
+msgstr "Scegli tra reti di test (per sviluppo) o reti live (per pagamenti reali)."
+
+msgid "Mode"
+msgstr "Modalità"
+
+msgid "Test mode uses testnet networks (no real money). Live mode uses mainnet networks (real payments)."
+msgstr "La modalità test usa reti testnet (nessun denaro reale). La modalità live usa reti mainnet (pagamenti reali)."
+
+msgid "L2Pay Gateway"
+msgstr "L2Pay Gateway"
+
+msgid "LIVE MODE - Real Payments Active"
+msgstr "MODALITÀ LIVE - Pagamenti Reali Attivi"
+
+msgid "You are accepting real cryptocurrency payments on mainnet networks. All transactions involve real money."
+msgstr "Stai accettando pagamenti in criptovaluta reali su reti mainnet. Tutte le transazioni coinvolgono denaro reale."
+
+msgid "TEST MODE - Using Testnets"
+msgstr "MODALITÀ TEST - Uso Testnet"
+
+msgid "You are using testnet networks. No real money is involved. Switch to Live Mode when ready to accept real payments."
+msgstr "Stai usando reti testnet. Nessun denaro reale coinvolto. Passa alla Modalità Live quando sei pronto ad accettare pagamenti reali."
+
+msgid "Setup"
+msgstr "Configurazione"
+
+msgid "Enter your wallet address below to receive payments"
+msgstr "Inserisci il tuo indirizzo wallet qui sotto per ricevere pagamenti"
+
+msgid "Customers will choose their preferred network at checkout"
+msgstr "I clienti sceglieranno la loro rete preferita al checkout"
+
+msgid "A 1% platform fee is applied to each transaction"
+msgstr "Una commissione dell'1% viene applicata ad ogni transazione"
+
+msgid "Security & Reliability"
+msgstr "Sicurezza e Affidabilità"
+
+msgid "Non-Custodial"
+msgstr "Non-Custodial"
+
+msgid "Payments go directly to your wallet. We never hold your funds."
+msgstr "I pagamenti vanno direttamente al tuo wallet. Non custodiamo mai i tuoi fondi."
+
+msgid "Immutable Smart Contract"
+msgstr "Smart Contract Immutabile"
+
+msgid "Contract code cannot be changed after deployment. Your funds are safe."
+msgstr "Il codice del contratto non può essere modificato dopo il deployment. I tuoi fondi sono al sicuro."
+
+msgid "Reentrancy Protection"
+msgstr "Protezione Reentrancy"
+
+msgid "Built-in guard against reentrancy attacks (OpenZeppelin standard)."
+msgstr "Protezione integrata contro attacchi di reentrancy (standard OpenZeppelin)."
+
+msgid "On-Chain Verification"
+msgstr "Verifica On-Chain"
+
+msgid "Every payment is verified on blockchain before order completion."
+msgstr "Ogni pagamento viene verificato sulla blockchain prima del completamento dell'ordine."
+
+msgid "Replay Attack Protection"
+msgstr "Protezione Replay Attack"
+
+msgid "Each payment is unique and cannot be reused across chains."
+msgstr "Ogni pagamento è unico e non può essere riutilizzato su altre chain."
+
+msgid "Open Source & Verified"
+msgstr "Open Source e Verificato"
+
+msgid "Contract source code is publicly verified on all block explorers."
+msgstr "Il codice sorgente del contratto è verificato pubblicamente su tutti i block explorer."
+
+msgid "Contract:"
+msgstr "Contratto:"
+
+msgid "Same address on all supported networks"
+msgstr "Stesso indirizzo su tutte le reti supportate"
+
+msgid "Available Mainnet Networks"
+msgstr "Reti Mainnet Disponibili"
+
+msgid "Available Testnet Networks"
+msgstr "Reti Testnet Disponibili"
+
+msgid "Test Mode - No real money"
+msgstr "Modalità Test - Nessun denaro reale"
+
+msgid "Pay with"
+msgstr "Paga con"
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "MetaMask not connected"
+msgstr "MetaMask non connesso"
+
+msgid "Order Total:"
+msgstr "Totale Ordine:"
+
+msgid "Amount:"
+msgstr "Importo:"
+
+msgid "Rate:"
+msgstr "Tasso:"
+
+msgid "Please complete the crypto payment before placing the order."
+msgstr "Completa il pagamento crypto prima di effettuare l'ordine."
+
+msgid "Invalid transaction hash. Please try again."
+msgstr "Hash transazione non valido. Riprova."
+
+msgid "Transaction not yet confirmed. Please wait a moment and try again."
+msgstr "Transazione non ancora confermata. Attendi un momento e riprova."
+
+msgid "Transaction failed on blockchain"
+msgstr "Transazione fallita sulla blockchain"
+
+msgid "Transaction sent to wrong contract address"
+msgstr "Transazione inviata all'indirizzo contratto sbagliato"
+
+msgid "No valid payment event found in transaction"
+msgstr "Nessun evento di pagamento valido trovato nella transazione"
+
+msgid "Payment sent to wrong merchant address"
+msgstr "Pagamento inviato all'indirizzo commerciante sbagliato"
+
+msgid "Payment Details"
+msgstr "Dettagli Pagamento"
+
+msgid "Transaction Hash:"
+msgstr "Hash Transazione:"
+
+msgid "Network:"
+msgstr "Rete:"
+
+msgid "Transaction:"
+msgstr "Transazione:"
+
+msgid "Live Mode"
+msgstr "Modalità Live"
+
+msgid "Test Mode"
+msgstr "Modalità Test"

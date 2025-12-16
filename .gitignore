@@ -1,0 +1,35 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-*
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+*.log
+*.tmp
+*.bak
+
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/upgrade/
+
+# Environment
+.env
+.env.local
+
+# Archives
+*.zip
+*.tar.gz
+
+# Development
+.claude/
+docker-compose.yml
+setup.sh
