@@ -50,7 +50,7 @@ Accept **ETH** and **USDC** payments via MetaMask on multiple blockchains. Non-c
 
 ```bash
 cd wp-content/plugins/
-git clone https://github.com/YOUR_USERNAME/l2pay.git
+git clone https://github.com/fgasparetto/l2pay-woocommerce.git
 ```
 
 Then activate from WordPress admin.
@@ -153,8 +153,8 @@ This project is licensed under the GPL v2 or later - see the [LICENSE](LICENSE) 
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/YOUR_USERNAME/l2pay/issues)
-- **Documentation**: [Wiki](https://github.com/YOUR_USERNAME/l2pay/wiki)
+- **Issues**: [GitHub Issues](https://github.com/fgasparetto/l2pay-woocommerce/issues)
+- **Documentation**: [Wiki](https://github.com/fgasparetto/l2pay-woocommerce/wiki)
 
 ## Changelog
 
