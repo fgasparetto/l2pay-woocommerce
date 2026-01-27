@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Layer Crypto Checkout 1.5.0\n"
+"Report-Msgid-Bugs-To: support@layercryptocheckout.com\n"
+"POT-Creation-Date: 2026-01-27 00:00+0000\n"
+"PO-Revision-Date: 2026-01-27 00:00+0000\n"
+"Last-Translator: Layer Crypto Checkout\n"
+"Language-Team: Layer Crypto Checkout\n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Layer Crypto Checkout\n"
+"X-Domain: layer-crypto-checkout\n"
+
+msgid "Layer Crypto Checkout"
+msgstr "Layer Crypto Checkout"
+
+msgid "Accept ETH and USDC payments via MetaMask or WalletConnect on Layer 2 networks."
+msgstr "Akzeptieren Sie ETH- und USDC-Zahlungen über MetaMask oder WalletConnect auf Layer-2-Netzwerken."
+
+msgid "Pay with Crypto"
+msgstr "Mit Krypto bezahlen"
+
+msgid "Pay with ETH or USDC using MetaMask or WalletConnect"
+msgstr "Bezahlen Sie mit ETH oder USDC über MetaMask oder WalletConnect"
+
+msgid "Enable/Disable"
+msgstr "Aktivieren/Deaktivieren"
+
+msgid "Enable Layer Crypto Checkout"
+msgstr "Layer Crypto Checkout aktivieren"
+
+msgid "Title"
+msgstr "Titel"
+
+msgid "Payment method title shown at checkout"
+msgstr "Titel der Zahlungsmethode an der Kasse"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Payment method description shown at checkout"
+msgstr "Beschreibung der Zahlungsmethode an der Kasse"
+
+msgid "Merchant Wallet"
+msgstr "Händler-Wallet"
+
+msgid "Your Ethereum wallet address to receive payments"
+msgstr "Ihre Ethereum-Wallet-Adresse für den Zahlungsempfang"
+
+msgid "Test Mode"
+msgstr "Testmodus"
+
+msgid "Use testnets for testing"
+msgstr "Testnets zum Testen verwenden"
+
+msgid "Price Margin (%)"
+msgstr "Preismarge (%)"
+
+msgid "Add margin to account for price volatility"
+msgstr "Marge für Preisvolatilität hinzufügen"
+
+msgid "Connect Wallet"
+msgstr "Wallet verbinden"
+
+msgid "Connecting..."
+msgstr "Verbindung wird hergestellt..."
+
+msgid "Processing..."
+msgstr "Verarbeitung..."
+
+msgid "Approving USDC..."
+msgstr "USDC-Genehmigung..."
+
+msgid "Waiting for confirmation..."
+msgstr "Warte auf Bestätigung..."
+
+msgid "Payment Complete!"
+msgstr "Zahlung abgeschlossen!"
+
+msgid "Pay with USDC"
+msgstr "Mit USDC bezahlen"
+
+msgid "No wallet found"
+msgstr "Kein Wallet gefunden"
+
+msgid "Transaction failed"
+msgstr "Transaktion fehlgeschlagen"
+
+msgid "Conversion error"
+msgstr "Umrechnungsfehler"
+
+msgid "Insufficient USDC balance"
+msgstr "Unzureichendes USDC-Guthaben"
+
+msgid "Merchant wallet not configured"
+msgstr "Händler-Wallet nicht konfiguriert"

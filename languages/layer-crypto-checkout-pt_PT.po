@@ -1,0 +1,99 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Layer Crypto Checkout 1.5.0\n"
+"Report-Msgid-Bugs-To: support@layercryptocheckout.com\n"
+"POT-Creation-Date: 2026-01-27 00:00+0000\n"
+"PO-Revision-Date: 2026-01-27 00:00+0000\n"
+"Last-Translator: Layer Crypto Checkout\n"
+"Language-Team: Layer Crypto Checkout\n"
+"Language: pt_PT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Layer Crypto Checkout\n"
+"X-Domain: layer-crypto-checkout\n"
+
+msgid "Layer Crypto Checkout"
+msgstr "Layer Crypto Checkout"
+
+msgid "Accept ETH and USDC payments via MetaMask or WalletConnect on Layer 2 networks."
+msgstr "Aceite pagamentos em ETH e USDC via MetaMask ou WalletConnect em redes Layer 2."
+
+msgid "Pay with Crypto"
+msgstr "Pagar com Crypto"
+
+msgid "Pay with ETH or USDC using MetaMask or WalletConnect"
+msgstr "Pague com ETH ou USDC usando MetaMask ou WalletConnect"
+
+msgid "Enable/Disable"
+msgstr "Ativar/Desativar"
+
+msgid "Enable Layer Crypto Checkout"
+msgstr "Ativar Layer Crypto Checkout"
+
+msgid "Title"
+msgstr "Título"
+
+msgid "Payment method title shown at checkout"
+msgstr "Título do método de pagamento exibido no checkout"
+
+msgid "Description"
+msgstr "Descrição"
+
+msgid "Payment method description shown at checkout"
+msgstr "Descrição do método de pagamento exibida no checkout"
+
+msgid "Merchant Wallet"
+msgstr "Carteira do Comerciante"
+
+msgid "Your Ethereum wallet address to receive payments"
+msgstr "O seu endereço de carteira Ethereum para receber pagamentos"
+
+msgid "Test Mode"
+msgstr "Modo de Teste"
+
+msgid "Use testnets for testing"
+msgstr "Usar testnets para testes"
+
+msgid "Price Margin (%)"
+msgstr "Margem de Preço (%)"
+
+msgid "Add margin to account for price volatility"
+msgstr "Adicionar margem para a volatilidade do preço"
+
+msgid "Connect Wallet"
+msgstr "Conectar Carteira"
+
+msgid "Connecting..."
+msgstr "A conectar..."
+
+msgid "Processing..."
+msgstr "A processar..."
+
+msgid "Approving USDC..."
+msgstr "A aprovar USDC..."
+
+msgid "Waiting for confirmation..."
+msgstr "A aguardar confirmação..."
+
+msgid "Payment Complete!"
+msgstr "Pagamento Concluído!"
+
+msgid "Pay with USDC"
+msgstr "Pagar com USDC"
+
+msgid "No wallet found"
+msgstr "Nenhuma carteira encontrada"
+
+msgid "Transaction failed"
+msgstr "Transação falhada"
+
+msgid "Conversion error"
+msgstr "Erro de conversão"
+
+msgid "Insufficient USDC balance"
+msgstr "Saldo USDC insuficiente"
+
+msgid "Merchant wallet not configured"
+msgstr "Carteira do comerciante não configurada"
