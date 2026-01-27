@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#627eea"/>
+      <stop offset="100%" style="stop-color:#764ba2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Hexagon background -->
+  <polygon
+    points="64,4 118,34 118,94 64,124 10,94 10,34"
+    fill="#1a1a2e"
+    stroke="url(#grad)"
+    stroke-width="3"
+  />
+
+  <!-- Layer icon (stacked layers) -->
+  <g fill="url(#grad)">
+    <!-- Bottom layer -->
+    <path d="M64,88 L32,72 L64,56 L96,72 Z" fill-opacity="0.4"/>
+    <!-- Middle layer -->
+    <path d="M64,76 L32,60 L64,44 L96,60 Z" fill-opacity="0.7"/>
+    <!-- Top layer -->
+    <path d="M64,64 L32,48 L64,32 L96,48 Z"/>
+  </g>
+
+  <!-- Crypto symbol (ETH diamond shape, small) -->
+  <g transform="translate(64,64) scale(0.3)" fill="#ffffff">
+    <path d="M0,-30 L20,0 L0,12 L-20,0 Z" fill-opacity="0.9"/>
+    <path d="M0,12 L20,0 L0,30 L-20,0 Z" fill-opacity="0.6"/>
+  </g>
+</svg>

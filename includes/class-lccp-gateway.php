@@ -1,8 +1,8 @@
 <?php
 /**
- * L2Pay Payment Gateway
+ * Layer Crypto Checkout Payment Gateway
  *
- * @package L2Pay
+ * @package LayerCryptoCheckout
  */
 
 if (!defined('ABSPATH')) {
@@ -10,9 +10,9 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * L2Pay Gateway Class
+ * LCC Gateway Class
  */
-class L2Pay_Gateway extends WC_Payment_Gateway {
+class LCCP_Gateway extends WC_Payment_Gateway {
 
     /**
      * Merchant wallet address
@@ -24,11 +24,11 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
      * Constructor
      */
     public function __construct() {
-        $this->id = 'l2pay';
-        $this->icon = L2PAY_PLUGIN_URL . 'assets/images/l2pay-icon.svg';
+        $this->id = 'layer-crypto-checkout';
+        $this->icon = LCCP_PLUGIN_URL . 'assets/images/lccp-icon.svg';
         $this->has_fields = true;
-        $this->method_title = __('L2Pay (ETH & USDC)', 'l2pay');
-        $this->method_description = __('Accept ETH and USDC payments via MetaMask. Payments are processed through a smart contract on multiple blockchains.', 'l2pay');
+        $this->method_title = __('Layer Crypto Checkout (ETH & USDC)', 'layer-crypto-checkout');
+        $this->method_description = __('Accept ETH and USDC payments via MetaMask or WalletConnect. Payments are processed through a smart contract on multiple blockchains.', 'layer-crypto-checkout');
         $this->supports = array(
             'products',
             'refunds',
@@ -56,34 +56,34 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
     public function init_form_fields() {
         $this->form_fields = array(
             'enabled' => array(
-                'title' => __('Enable/Disable', 'l2pay'),
+                'title' => __('Enable/Disable', 'layer-crypto-checkout'),
                 'type' => 'checkbox',
-                'label' => __('Enable L2Pay Gateway', 'l2pay'),
+                'label' => __('Enable Layer Crypto Checkout Gateway', 'layer-crypto-checkout'),
                 'default' => 'no',
             ),
             'title' => array(
-                'title' => __('Title', 'l2pay'),
+                'title' => __('Title', 'layer-crypto-checkout'),
                 'type' => 'text',
-                'description' => __('This controls the title which the user sees during checkout.', 'l2pay'),
-                'default' => __('Pay with Crypto (MetaMask)', 'l2pay'),
+                'description' => __('This controls the title which the user sees during checkout.', 'layer-crypto-checkout'),
+                'default' => __('Pay with Crypto', 'layer-crypto-checkout'),
                 'desc_tip' => true,
             ),
             'description' => array(
-                'title' => __('Description', 'l2pay'),
+                'title' => __('Description', 'layer-crypto-checkout'),
                 'type' => 'textarea',
-                'description' => __('This controls the description which the user sees during checkout.', 'l2pay'),
-                'default' => __('Pay securely with ETH or USDC via MetaMask.', 'l2pay'),
+                'description' => __('This controls the description which the user sees during checkout.', 'layer-crypto-checkout'),
+                'default' => __('Pay securely with ETH or USDC via MetaMask or WalletConnect.', 'layer-crypto-checkout'),
                 'desc_tip' => true,
             ),
             'merchant_settings' => array(
-                'title' => __('Merchant Settings', 'l2pay'),
+                'title' => __('Merchant Settings', 'layer-crypto-checkout'),
                 'type' => 'title',
-                'description' => __('Configure your merchant wallet address.', 'l2pay'),
+                'description' => __('Configure your merchant wallet address.', 'layer-crypto-checkout'),
             ),
             'merchant_address' => array(
-                'title' => __('Wallet Address', 'l2pay'),
+                'title' => __('Wallet Address', 'layer-crypto-checkout'),
                 'type' => 'text',
-                'description' => __('Your Ethereum wallet address where you will receive payments.', 'l2pay'),
+                'description' => __('Your Ethereum wallet address where you will receive payments.', 'layer-crypto-checkout'),
                 'default' => '',
                 'desc_tip' => true,
                 'custom_attributes' => array(
@@ -93,14 +93,14 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
                 ),
             ),
             'advanced_settings' => array(
-                'title' => __('Advanced Settings', 'l2pay'),
+                'title' => __('Advanced Settings', 'layer-crypto-checkout'),
                 'type' => 'title',
-                'description' => __('Additional configuration options.', 'l2pay'),
+                'description' => __('Additional configuration options.', 'layer-crypto-checkout'),
             ),
             'price_margin' => array(
-                'title' => __('Price Margin (%)', 'l2pay'),
+                'title' => __('Price Margin (%)', 'layer-crypto-checkout'),
                 'type' => 'number',
-                'description' => __('Add a margin to the ETH price to account for price volatility during transaction confirmation. Default: 2%', 'l2pay'),
+                'description' => __('Add a margin to the ETH price to account for price volatility during transaction confirmation. Default: 2%', 'layer-crypto-checkout'),
                 'default' => '2',
                 'desc_tip' => true,
                 'custom_attributes' => array(
@@ -110,9 +110,9 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
                 ),
             ),
             'price_cache_duration' => array(
-                'title' => __('Price Cache Duration (seconds)', 'l2pay'),
+                'title' => __('Price Cache Duration (seconds)', 'layer-crypto-checkout'),
                 'type' => 'number',
-                'description' => __('How long to cache the ETH price. Lower values = more accurate but more API calls. Default: 60 seconds', 'l2pay'),
+                'description' => __('How long to cache the ETH price. Lower values = more accurate but more API calls. Default: 60 seconds', 'layer-crypto-checkout'),
                 'default' => '60',
                 'desc_tip' => true,
                 'custom_attributes' => array(
@@ -122,26 +122,26 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
                 ),
             ),
             'debug_mode' => array(
-                'title' => __('Debug Mode', 'l2pay'),
+                'title' => __('Debug Mode', 'layer-crypto-checkout'),
                 'type' => 'checkbox',
-                'label' => __('Enable debug logging', 'l2pay'),
+                'label' => __('Enable debug logging', 'layer-crypto-checkout'),
                 'default' => 'no',
-                'description' => __('Log payment events and errors for debugging.', 'l2pay'),
+                'description' => __('Log payment events and errors for debugging.', 'layer-crypto-checkout'),
             ),
             'network_settings' => array(
-                'title' => __('Network Mode', 'l2pay'),
+                'title' => __('Network Mode', 'layer-crypto-checkout'),
                 'type' => 'title',
-                'description' => __('Choose between test networks (for development) or live networks (for real payments).', 'l2pay'),
+                'description' => __('Choose between test networks (for development) or live networks (for real payments).', 'layer-crypto-checkout'),
             ),
             'network_mode' => array(
-                'title' => __('Mode', 'l2pay'),
+                'title' => __('Mode', 'layer-crypto-checkout'),
                 'type' => 'select',
-                'description' => __('Test mode uses testnet networks (no real money). Live mode uses mainnet networks (real payments).', 'l2pay'),
+                'description' => __('Test mode uses testnet networks (no real money). Live mode uses mainnet networks (real payments).', 'layer-crypto-checkout'),
                 'default' => 'test',
                 'desc_tip' => true,
                 'options' => array(
-                    'test' => __('🧪 Test Mode (Testnets)', 'l2pay'),
-                    'live' => __('🟢 Live Mode (Mainnets)', 'l2pay'),
+                    'test' => __('Test Mode (Testnets)', 'layer-crypto-checkout'),
+                    'live' => __('Live Mode (Mainnets)', 'layer-crypto-checkout'),
                 ),
             ),
         );
@@ -151,91 +151,91 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
      * Admin Panel Options
      */
     public function admin_options() {
-        $available_networks = l2pay_get_available_networks();
-        $is_live_mode = !l2pay_is_test_mode();
-        $mode_label = $is_live_mode ? __('Live Mode', 'l2pay') : __('Test Mode', 'l2pay');
+        $available_networks = lccp_get_available_networks();
+        $is_live_mode = !lccp_is_test_mode();
+        $mode_label = $is_live_mode ? __('Live Mode', 'layer-crypto-checkout') : __('Test Mode', 'layer-crypto-checkout');
         ?>
-        <div class="l2pay-admin-header" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
-            <img src="<?php echo esc_url(L2PAY_PLUGIN_URL . 'assets/images/l2pay-icon.svg'); ?>" alt="L2Pay" style="width: 48px; height: 48px;">
+        <div class="lccp-admin-header" style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+            <img src="<?php echo esc_url(LCCP_PLUGIN_URL . 'assets/images/lccp-icon.svg'); ?>" alt="Layer Crypto Checkout" style="width: 48px; height: 48px;">
             <div>
-                <h2 style="margin: 0; padding: 0;"><?php _e('L2Pay Gateway', 'l2pay'); ?></h2>
+                <h2 style="margin: 0; padding: 0;"><?php esc_html_e('Layer Crypto Checkout', 'layer-crypto-checkout'); ?></h2>
                 <span style="color: #646970; font-size: 13px;">Crypto Payments for WooCommerce</span>
             </div>
         </div>
 
         <?php if ($is_live_mode): ?>
-        <div class="l2pay-live-warning" style="background: #fcf0f0; border-left: 4px solid #d63638; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
-            <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #d63638;">🟢 <?php _e('LIVE MODE - Real Payments Active', 'l2pay'); ?></h4>
+        <div class="lccp-live-warning" style="background: #fcf0f0; border-left: 4px solid #d63638; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
+            <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #d63638;"><?php esc_html_e('LIVE MODE - Real Payments Active', 'layer-crypto-checkout'); ?></h4>
             <p style="margin: 0; color: #1d2327;">
-                <?php _e('You are accepting real cryptocurrency payments on mainnet networks. All transactions involve real money.', 'l2pay'); ?>
+                <?php esc_html_e('You are accepting real cryptocurrency payments on mainnet networks. All transactions involve real money.', 'layer-crypto-checkout'); ?>
             </p>
         </div>
         <?php else: ?>
-        <div class="l2pay-test-notice" style="background: #fff8e5; border-left: 4px solid #dba617; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
-            <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #9a6700;">🧪 <?php _e('TEST MODE - Using Testnets', 'l2pay'); ?></h4>
+        <div class="lccp-test-notice" style="background: #fff8e5; border-left: 4px solid #dba617; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
+            <h4 style="margin: 0 0 8px 0; font-size: 14px; color: #9a6700;"><?php esc_html_e('TEST MODE - Using Testnets', 'layer-crypto-checkout'); ?></h4>
             <p style="margin: 0; color: #1d2327;">
-                <?php _e('You are using testnet networks. No real money is involved. Switch to Live Mode when ready to accept real payments.', 'l2pay'); ?>
+                <?php esc_html_e('You are using testnet networks. No real money is involved. Switch to Live Mode when ready to accept real payments.', 'layer-crypto-checkout'); ?>
             </p>
         </div>
         <?php endif; ?>
 
-        <div class="l2pay-admin-notice" style="background: #f0f6fc; border-left: 4px solid #2271b1; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
-            <h4 style="margin: 0 0 8px 0; font-size: 14px;"><?php _e('Setup', 'l2pay'); ?></h4>
+        <div class="lccp-admin-notice" style="background: #f0f6fc; border-left: 4px solid #2271b1; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
+            <h4 style="margin: 0 0 8px 0; font-size: 14px;"><?php esc_html_e('Setup', 'layer-crypto-checkout'); ?></h4>
             <ol style="margin: 0; padding-left: 18px; color: #1d2327; line-height: 1.6;">
-                <li><?php _e('Enter your wallet address below to receive payments', 'l2pay'); ?></li>
-                <li><?php _e('Customers will choose their preferred network at checkout', 'l2pay'); ?></li>
-                <li><?php _e('A 1% platform fee is applied to each transaction', 'l2pay'); ?></li>
+                <li><?php esc_html_e('Enter your wallet address below to receive payments', 'layer-crypto-checkout'); ?></li>
+                <li><?php esc_html_e('Customers will choose their preferred network at checkout', 'layer-crypto-checkout'); ?></li>
+                <li><?php esc_html_e('A 1% platform fee is applied to each transaction', 'layer-crypto-checkout'); ?></li>
             </ol>
         </div>
 
-        <div class="l2pay-security-info" style="background: #f0f9f0; border-left: 4px solid #00a32a; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
-            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #00a32a;">🔒 <?php _e('Security & Reliability', 'l2pay'); ?></h4>
+        <div class="lccp-security-info" style="background: #f0f9f0; border-left: 4px solid #00a32a; padding: 12px 16px; margin: 20px 0; border-radius: 0 4px 4px 0;">
+            <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #00a32a;"><?php esc_html_e('Security & Reliability', 'layer-crypto-checkout'); ?></h4>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; font-size: 13px; color: #1d2327;">
                 <div>
-                    <strong>✅ <?php _e('Non-Custodial', 'l2pay'); ?></strong><br>
-                    <span style="color: #50575e;"><?php _e('Payments go directly to your wallet. We never hold your funds.', 'l2pay'); ?></span>
+                    <strong><?php esc_html_e('Non-Custodial', 'layer-crypto-checkout'); ?></strong><br>
+                    <span style="color: #50575e;"><?php esc_html_e('Payments go directly to your wallet. We never hold your funds.', 'layer-crypto-checkout'); ?></span>
                 </div>
                 <div>
-                    <strong>✅ <?php _e('Immutable Smart Contract', 'l2pay'); ?></strong><br>
-                    <span style="color: #50575e;"><?php _e('Contract code cannot be changed after deployment. Your funds are safe.', 'l2pay'); ?></span>
+                    <strong><?php esc_html_e('Immutable Smart Contract', 'layer-crypto-checkout'); ?></strong><br>
+                    <span style="color: #50575e;"><?php esc_html_e('Contract code cannot be changed after deployment. Your funds are safe.', 'layer-crypto-checkout'); ?></span>
                 </div>
                 <div>
-                    <strong>✅ <?php _e('Reentrancy Protection', 'l2pay'); ?></strong><br>
-                    <span style="color: #50575e;"><?php _e('Built-in guard against reentrancy attacks (OpenZeppelin standard).', 'l2pay'); ?></span>
+                    <strong><?php esc_html_e('Reentrancy Protection', 'layer-crypto-checkout'); ?></strong><br>
+                    <span style="color: #50575e;"><?php esc_html_e('Built-in guard against reentrancy attacks (OpenZeppelin standard).', 'layer-crypto-checkout'); ?></span>
                 </div>
                 <div>
-                    <strong>✅ <?php _e('On-Chain Verification', 'l2pay'); ?></strong><br>
-                    <span style="color: #50575e;"><?php _e('Every payment is verified on blockchain before order completion.', 'l2pay'); ?></span>
+                    <strong><?php esc_html_e('On-Chain Verification', 'layer-crypto-checkout'); ?></strong><br>
+                    <span style="color: #50575e;"><?php esc_html_e('Every payment is verified on blockchain before order completion.', 'layer-crypto-checkout'); ?></span>
                 </div>
                 <div>
-                    <strong>✅ <?php _e('Replay Attack Protection', 'l2pay'); ?></strong><br>
-                    <span style="color: #50575e;"><?php _e('Each payment is unique and cannot be reused across chains.', 'l2pay'); ?></span>
+                    <strong><?php esc_html_e('Replay Attack Protection', 'layer-crypto-checkout'); ?></strong><br>
+                    <span style="color: #50575e;"><?php esc_html_e('Each payment is unique and cannot be reused across chains.', 'layer-crypto-checkout'); ?></span>
                 </div>
                 <div>
-                    <strong>✅ <?php _e('Open Source & Verified', 'l2pay'); ?></strong><br>
-                    <span style="color: #50575e;"><?php _e('Contract source code is publicly verified on all block explorers.', 'l2pay'); ?></span>
+                    <strong><?php esc_html_e('Open Source & Verified', 'layer-crypto-checkout'); ?></strong><br>
+                    <span style="color: #50575e;"><?php esc_html_e('Contract source code is publicly verified on all block explorers.', 'layer-crypto-checkout'); ?></span>
                 </div>
             </div>
             <p style="margin: 12px 0 0 0; padding-top: 10px; border-top: 1px solid #c3e6c3; font-size: 12px; color: #50575e;">
-                📄 <?php _e('Contract:', 'l2pay'); ?> <code style="background: #e7f5e7; padding: 2px 6px; border-radius: 3px;">0x84f679497947f9186258Af929De2e760677D5949</code>
+                <?php esc_html_e('Contract:', 'layer-crypto-checkout'); ?> <code style="background: #e7f5e7; padding: 2px 6px; border-radius: 3px;">0x84f679497947f9186258Af929De2e760677D5949</code>
                 &nbsp;|&nbsp;
-                <?php _e('Same address on all supported networks', 'l2pay'); ?>
+                <?php esc_html_e('Same address on all supported networks', 'layer-crypto-checkout'); ?>
             </p>
         </div>
 
-        <div class="l2pay-contract-info" style="background: #fff; border: 1px solid #c3c4c7; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <div class="lccp-contract-info" style="background: #fff; border: 1px solid #c3c4c7; padding: 15px; margin: 20px 0; border-radius: 4px;">
             <h4 style="margin: 0 0 12px 0; font-size: 14px;">
-                <?php echo $is_live_mode ? __('Available Mainnet Networks', 'l2pay') : __('Available Testnet Networks', 'l2pay'); ?>
+                <?php echo $is_live_mode ? esc_html__('Available Mainnet Networks', 'layer-crypto-checkout') : esc_html__('Available Testnet Networks', 'layer-crypto-checkout'); ?>
             </h4>
             <div style="display: flex; flex-wrap: wrap; gap: 8px;">
                 <?php
-                $networks_to_show = l2pay_get_available_networks();
+                $networks_to_show = lccp_get_available_networks();
                 if (empty($networks_to_show)):
                 ?>
                     <p style="color: #9a6700; margin: 0;">
                         <?php echo $is_live_mode
-                            ? __('No mainnet contracts deployed yet. Deploy contracts to mainnet networks first.', 'l2pay')
-                            : __('No testnet contracts deployed yet.', 'l2pay');
+                            ? esc_html__('No mainnet contracts deployed yet. Deploy contracts to mainnet networks first.', 'layer-crypto-checkout')
+                            : esc_html__('No testnet contracts deployed yet.', 'layer-crypto-checkout');
                         ?>
                     </p>
                 <?php else: ?>
@@ -243,7 +243,7 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
                     <a href="<?php echo esc_url($network['explorer'] . '/address/' . $network['contract']); ?>"
                        target="_blank"
                        style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; background: <?php echo $network['is_testnet'] ? '#fff8e5' : '#e7f5e7'; ?>; border: 1px solid <?php echo $network['is_testnet'] ? '#f0c33c' : '#68b368'; ?>; border-radius: 4px; text-decoration: none; color: #1d2327; font-size: 13px;">
-                        <span style="color: <?php echo $network['is_testnet'] ? '#9a6700' : '#00a32a'; ?>;">●</span>
+                        <span style="color: <?php echo $network['is_testnet'] ? '#9a6700' : '#00a32a'; ?>;">&#9679;</span>
                         <?php echo esc_html($network['name']); ?>
                     </a>
                     <?php endforeach; ?>
@@ -274,52 +274,45 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
     }
 
     /**
-     * Get the contract address (read-only, configured in wp-config.php)
-     */
-    public function get_contract_address() {
-        return L2PAY_CONTRACT_ADDRESS;
-    }
-
-    /**
      * Payment fields displayed at checkout
      */
     public function payment_fields() {
         // Display description
         if ($this->description) {
-            echo wpautop(wptexturize($this->description));
+            echo wp_kses_post(wpautop(wptexturize($this->description)));
         }
 
         // Get cart total
         $total = WC()->cart->get_total('edit');
-        $available_networks = l2pay_get_available_networks();
-        $is_test_mode = l2pay_is_test_mode();
+        $available_networks = lccp_get_available_networks();
+        $is_test_mode = lccp_is_test_mode();
 
         ?>
         <?php if ($is_test_mode): ?>
-        <div class="l2pay-mode-badge test" style="background: #fff8e5; border: 1px solid #dba617; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 16px;">🧪</span>
-            <span style="color: #9a6700; font-weight: 500; font-size: 13px;"><?php _e('Test Mode - No real money', 'l2pay'); ?></span>
+        <div class="lccp-mode-badge test" style="background: #fff8e5; border: 1px solid #dba617; padding: 8px 12px; margin-bottom: 15px; border-radius: 4px; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 16px;">&#129514;</span>
+            <span style="color: #9a6700; font-weight: 500; font-size: 13px;"><?php esc_html_e('Test Mode - No real money', 'layer-crypto-checkout'); ?></span>
         </div>
         <?php endif; ?>
-        <div id="l2pay-payment-container">
-            <div class="l2pay-selectors">
-                <div class="l2pay-payment-type-selector">
-                    <label><?php _e('Pay with', 'l2pay'); ?></label>
-                    <div class="l2pay-payment-options">
-                        <label class="l2pay-option">
-                            <input type="radio" name="l2pay_payment_type" value="eth" checked>
+        <div id="lccp-payment-container">
+            <div class="lccp-selectors">
+                <div class="lccp-payment-type-selector">
+                    <label><?php esc_html_e('Pay with', 'layer-crypto-checkout'); ?></label>
+                    <div class="lccp-payment-options">
+                        <label class="lccp-option">
+                            <input type="radio" name="lccp_payment_type" value="eth" checked>
                             <span>ETH</span>
                         </label>
-                        <label class="l2pay-option">
-                            <input type="radio" name="l2pay_payment_type" value="usdc">
+                        <label class="lccp-option">
+                            <input type="radio" name="lccp_payment_type" value="usdc">
                             <span>USDC</span>
                         </label>
                     </div>
                 </div>
 
-                <div class="l2pay-network-selector">
-                    <label for="l2pay-network"><?php _e('Network', 'l2pay'); ?></label>
-                    <select id="l2pay-network" name="l2pay_network">
+                <div class="lccp-network-selector">
+                    <label for="lcc-network"><?php esc_html_e('Network', 'layer-crypto-checkout'); ?></label>
+                    <select id="lccp-network" name="lccp_network">
                         <?php foreach ($available_networks as $key => $network): ?>
                             <option value="<?php echo esc_attr($key); ?>"
                                     data-chain-id="<?php echo esc_attr($network['chain_id']); ?>"
@@ -332,37 +325,38 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
                 </div>
             </div>
 
-            <div id="l2pay-wallet-status" class="l2pay-status disconnected">
-                <span class="l2pay-status-icon">&#128274;</span>
-                <span class="l2pay-status-text"><?php _e('MetaMask not connected', 'l2pay'); ?></span>
+            <div id="lccp-wallet-status" class="lccp-status disconnected">
+                <span class="lccp-status-icon">&#128274;</span>
+                <span class="lccp-status-text"><?php esc_html_e('Wallet not connected', 'layer-crypto-checkout'); ?></span>
+                <button type="button" id="lccp-disconnect-btn" style="display:none; margin-left:10px; padding:2px 8px; font-size:12px; cursor:pointer; border:1px solid #ccc; border-radius:4px; background:#f5f5f5;">Disconnect</button>
             </div>
 
-            <div id="l2pay-price-display" class="l2pay-price" style="display: none;">
-                <div class="l2pay-price-row">
-                    <span class="l2pay-label"><?php _e('Order Total:', 'l2pay'); ?></span>
-                    <span class="l2pay-value"><?php echo wc_price($total); ?></span>
+            <div id="lccp-price-display" class="lccp-price" style="display: none;">
+                <div class="lccp-price-row">
+                    <span class="lccp-label"><?php esc_html_e('Order Total:', 'layer-crypto-checkout'); ?></span>
+                    <span class="lccp-value"><?php echo wp_kses_post(wc_price($total)); ?></span>
                 </div>
-                <div class="l2pay-price-row">
-                    <span class="l2pay-label" id="l2pay-amount-label"><?php _e('Amount:', 'l2pay'); ?></span>
-                    <span class="l2pay-value" id="l2pay-crypto-amount">--</span>
+                <div class="lccp-price-row">
+                    <span class="lccp-label" id="lccp-amount-label"><?php esc_html_e('Amount:', 'layer-crypto-checkout'); ?></span>
+                    <span class="lccp-value" id="lccp-crypto-amount">--</span>
                 </div>
-                <div class="l2pay-price-row l2pay-rate">
-                    <span class="l2pay-label"><?php _e('Rate:', 'l2pay'); ?></span>
-                    <span class="l2pay-value" id="l2pay-rate">--</span>
+                <div class="lccp-price-row lcc-rate">
+                    <span class="lccp-label"><?php esc_html_e('Rate:', 'layer-crypto-checkout'); ?></span>
+                    <span class="lccp-value" id="lccp-rate">--</span>
                 </div>
             </div>
 
-            <button type="button" id="l2pay-connect-btn" class="button l2pay-btn">
-                <span class="l2pay-btn-icon">&#129418;</span>
-                <?php _e('Connect MetaMask', 'l2pay'); ?>
+            <button type="button" id="lccp-connect-btn" class="button lcc-btn">
+                <span class="lccp-btn-icon">&#129418;</span>
+                <?php esc_html_e('Connect Wallet', 'layer-crypto-checkout'); ?>
             </button>
 
-            <div id="l2pay-error" class="l2pay-error" style="display: none;"></div>
+            <div id="lccp-error" class="lccp-error" style="display: none;"></div>
 
-            <input type="hidden" id="l2pay-tx-hash" name="l2pay_tx_hash" value="">
-            <input type="hidden" id="l2pay-eth-paid" name="l2pay_eth_amount" value="">
-            <input type="hidden" id="l2pay-wallet-address" name="l2pay_wallet_address" value="">
-            <input type="hidden" id="l2pay-payment-type" name="l2pay_payment_type_hidden" value="eth">
+            <input type="hidden" id="lccp-tx-hash" name="lccp_tx_hash" value="">
+            <input type="hidden" id="lccp-eth-paid" name="lccp_eth_amount" value="">
+            <input type="hidden" id="lccp-wallet-address" name="lccp_wallet_address" value="">
+            <input type="hidden" id="lccp-payment-type" name="lccp_payment_type_hidden" value="eth">
         </div>
         <?php
     }
@@ -371,16 +365,18 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
      * Validate payment fields
      */
     public function validate_fields() {
-        $tx_hash = isset($_POST['l2pay_tx_hash']) ? sanitize_text_field($_POST['l2pay_tx_hash']) : '';
+        // Nonce verification is handled by WooCommerce checkout process.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce handles nonce verification
+        $tx_hash = isset($_POST['lccp_tx_hash']) ? sanitize_text_field(wp_unslash($_POST['lccp_tx_hash'])) : '';
 
         if (empty($tx_hash)) {
-            wc_add_notice(__('Please complete the crypto payment before placing the order.', 'l2pay'), 'error');
+            wc_add_notice(__('Please complete the crypto payment before placing the order.', 'layer-crypto-checkout'), 'error');
             return false;
         }
 
         // Validate transaction hash format
         if (!preg_match('/^0x[a-fA-F0-9]{64}$/', $tx_hash)) {
-            wc_add_notice(__('Invalid transaction hash. Please try again.', 'l2pay'), 'error');
+            wc_add_notice(__('Invalid transaction hash. Please try again.', 'layer-crypto-checkout'), 'error');
             return false;
         }
 
@@ -393,28 +389,34 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
     public function process_payment($order_id) {
         $order = wc_get_order($order_id);
 
-        $tx_hash = isset($_POST['l2pay_tx_hash']) ? sanitize_text_field($_POST['l2pay_tx_hash']) : '';
-        $crypto_amount = isset($_POST['l2pay_eth_amount']) ? sanitize_text_field($_POST['l2pay_eth_amount']) : '';
-        $wallet_address = isset($_POST['l2pay_wallet_address']) ? sanitize_text_field($_POST['l2pay_wallet_address']) : '';
-        $network_key = isset($_POST['l2pay_network']) ? sanitize_text_field($_POST['l2pay_network']) : 'sepolia';
-        $payment_type = isset($_POST['l2pay_payment_type']) ? sanitize_text_field($_POST['l2pay_payment_type']) : 'eth';
+        // Nonce verification is handled by WooCommerce checkout process.
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- WooCommerce handles nonce verification
+        $tx_hash = isset($_POST['lccp_tx_hash']) ? sanitize_text_field(wp_unslash($_POST['lccp_tx_hash'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $crypto_amount = isset($_POST['lccp_eth_amount']) ? sanitize_text_field(wp_unslash($_POST['lccp_eth_amount'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $wallet_address = isset($_POST['lccp_wallet_address']) ? sanitize_text_field(wp_unslash($_POST['lccp_wallet_address'])) : '';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $network_key = isset($_POST['lccp_network']) ? sanitize_text_field(wp_unslash($_POST['lccp_network'])) : 'sepolia';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $payment_type = isset($_POST['lccp_payment_type']) ? sanitize_text_field(wp_unslash($_POST['lccp_payment_type'])) : 'eth';
 
         // Get network info
-        $network = l2pay_get_network($network_key);
-        $explorer_url = l2pay_get_tx_url($tx_hash, $network_key);
+        $network = lccp_get_network($network_key);
+        $explorer_url = lccp_get_tx_url($tx_hash, $network_key);
 
         // Determine symbol based on payment type
         $symbol = ($payment_type === 'usdc') ? 'USDC' : ($network ? $network['symbol'] : 'ETH');
         $network_name = $network ? $network['name'] : $network_key;
 
         // Save payment metadata first
-        $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-        $order->update_meta_data('_l2pay_crypto_amount', $crypto_amount);
-        $order->update_meta_data('_l2pay_payment_type', $payment_type);
-        $order->update_meta_data('_l2pay_symbol', $symbol);
-        $order->update_meta_data('_l2pay_payer_address', $wallet_address);
-        $order->update_meta_data('_l2pay_network', $network_key);
-        $order->update_meta_data('_l2pay_contract', $network ? $network['contract'] : '');
+        $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+        $order->update_meta_data('_lccp_crypto_amount', $crypto_amount);
+        $order->update_meta_data('_lccp_payment_type', $payment_type);
+        $order->update_meta_data('_lccp_symbol', $symbol);
+        $order->update_meta_data('_lccp_payer_address', $wallet_address);
+        $order->update_meta_data('_lccp_network', $network_key);
+        $order->update_meta_data('_lccp_contract', $network ? $network['contract'] : '');
         $order->save();
 
         // Perform on-chain verification
@@ -423,13 +425,14 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
         if (is_wp_error($verification_result)) {
             // Verification failed - mark order as failed
             $order->update_status('failed', sprintf(
-                __('L2Pay: On-chain verification failed: %s', 'l2pay'),
+                /* translators: %s: error message */
+                __('Layer Crypto Checkout: On-chain verification failed: %s', 'layer-crypto-checkout'),
                 $verification_result->get_error_message()
             ));
             $order->save();
 
             wc_add_notice(
-                __('Payment verification failed: ', 'l2pay') . $verification_result->get_error_message(),
+                __('Payment verification failed: ', 'layer-crypto-checkout') . $verification_result->get_error_message(),
                 'error'
             );
 
@@ -445,17 +448,17 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
         }
 
         // Verification passed - complete the order
-        $order->update_meta_data('_l2pay_verified', 'yes');
-        $order->update_meta_data('_l2pay_verified_at', time());
+        $order->update_meta_data('_lccp_verified', 'yes');
+        $order->update_meta_data('_lccp_verified_at', time());
 
         if (isset($verification_result['payer'])) {
-            $order->update_meta_data('_l2pay_verified_payer', $verification_result['payer']);
+            $order->update_meta_data('_lccp_verified_payer', $verification_result['payer']);
         }
         if (isset($verification_result['amount'])) {
-            $order->update_meta_data('_l2pay_verified_amount', $verification_result['amount']);
+            $order->update_meta_data('_lccp_verified_amount', $verification_result['amount']);
         }
         if (isset($verification_result['block_number'])) {
-            $order->update_meta_data('_l2pay_block_number', $verification_result['block_number']);
+            $order->update_meta_data('_lccp_block_number', $verification_result['block_number']);
         }
 
         // Mark as processing
@@ -464,11 +467,12 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
         // Add order note with verification details
         $order->add_order_note(
             sprintf(
-                __('L2Pay payment verified on-chain (%s). Amount: %s %s. TX: %s', 'l2pay'),
+                /* translators: 1: network name, 2: crypto amount, 3: currency symbol, 4: transaction link */
+                __('Layer Crypto Checkout payment verified on-chain (%1$s). Amount: %2$s %3$s. TX: %4$s', 'layer-crypto-checkout'),
                 $network_name,
                 $crypto_amount,
                 $symbol,
-                '<a href="' . $explorer_url . '" target="_blank">' . substr($tx_hash, 0, 20) . '...</a>'
+                '<a href="' . esc_url($explorer_url) . '" target="_blank">' . esc_html(substr($tx_hash, 0, 20)) . '...</a>'
             )
         );
 
@@ -500,21 +504,22 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
         // Get RPC URL for the network
         $rpc_url = $this->get_rpc_url($network_key);
         if (!$rpc_url) {
-            return new WP_Error('invalid_network', __('Invalid network configuration', 'l2pay'));
+            return new WP_Error('invalid_network', __('Invalid network configuration', 'layer-crypto-checkout'));
         }
 
         // Get network config
-        $network = l2pay_get_network($network_key);
+        $network = lccp_get_network($network_key);
         $contract_address = $network ? strtolower($network['contract']) : '';
         $merchant_address = strtolower($this->merchant_address);
 
         if (empty($contract_address)) {
-            return new WP_Error('no_contract', __('Contract not configured for this network', 'l2pay'));
+            return new WP_Error('no_contract', __('Contract not configured for this network', 'layer-crypto-checkout'));
         }
 
         // Retry logic: transaction might not be propagated to all nodes immediately
-        $max_retries = 3;
-        $retry_delay = 2; // seconds
+        // Testnets and L2s can take 10-30 seconds for confirmation
+        $max_retries = 10;
+        $retry_delay = 3; // seconds
         $receipt = null;
 
         for ($attempt = 1; $attempt <= $max_retries; $attempt++) {
@@ -539,31 +544,31 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
         }
 
         if ($receipt === null) {
-            return new WP_Error('tx_pending', __('Transaction not yet confirmed. Please wait a moment and try again.', 'l2pay'));
+            return new WP_Error('tx_pending', __('Transaction not yet confirmed. Please wait a moment and try again.', 'layer-crypto-checkout'));
         }
 
         // Check transaction status
         $status = isset($receipt['status']) ? $receipt['status'] : '0x0';
         if ($this->hex_to_dec($status) !== '1') {
-            return new WP_Error('tx_failed', __('Transaction failed on blockchain', 'l2pay'));
+            return new WP_Error('tx_failed', __('Transaction failed on blockchain', 'layer-crypto-checkout'));
         }
 
         // Verify transaction was sent to our contract
         $tx_to = strtolower($receipt['to'] ?? '');
         if ($tx_to !== $contract_address) {
-            return new WP_Error('wrong_contract', __('Transaction sent to wrong contract address', 'l2pay'));
+            return new WP_Error('wrong_contract', __('Transaction sent to wrong contract address', 'layer-crypto-checkout'));
         }
 
         // Parse event logs to verify payment
         $payment_data = $this->parse_payment_logs($receipt['logs'] ?? array());
 
         if (!$payment_data) {
-            return new WP_Error('no_event', __('No valid payment event found in transaction', 'l2pay'));
+            return new WP_Error('no_event', __('No valid payment event found in transaction', 'layer-crypto-checkout'));
         }
 
         // Verify merchant address
         if (strtolower($payment_data['merchant']) !== $merchant_address) {
-            return new WP_Error('wrong_merchant', __('Payment sent to wrong merchant address', 'l2pay'));
+            return new WP_Error('wrong_merchant', __('Payment sent to wrong merchant address', 'layer-crypto-checkout'));
         }
 
         // All checks passed
@@ -706,34 +711,34 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
      */
     public function thankyou_page($order_id) {
         $order = wc_get_order($order_id);
-        $tx_hash = $order->get_meta('_l2pay_tx_hash');
-        $crypto_amount = $order->get_meta('_l2pay_crypto_amount') ?: $order->get_meta('_l2pay_eth_amount');
-        $symbol = $order->get_meta('_l2pay_symbol');
-        $network_key = $order->get_meta('_l2pay_network') ?: 'sepolia';
-        $network = l2pay_get_network($network_key);
+        $tx_hash = $order->get_meta('_lccp_tx_hash');
+        $crypto_amount = $order->get_meta('_lccp_crypto_amount') ?: $order->get_meta('_lccp_eth_amount');
+        $symbol = $order->get_meta('_lccp_symbol');
+        $network_key = $order->get_meta('_lccp_network') ?: 'sepolia';
+        $network = lccp_get_network($network_key);
 
         if ($tx_hash) {
-            $explorer_url = l2pay_get_tx_url($tx_hash, $network_key);
+            $explorer_url = lccp_get_tx_url($tx_hash, $network_key);
             if (!$symbol) {
                 $symbol = $network ? $network['symbol'] : 'ETH';
             }
             $network_name = $network ? $network['name'] : $network_key;
             ?>
-            <div class="l2pay-thankyou">
-                <h2><?php _e('Payment Details', 'l2pay'); ?></h2>
+            <div class="lccp-thankyou">
+                <h2><?php esc_html_e('Payment Details', 'layer-crypto-checkout'); ?></h2>
                 <ul class="woocommerce-order-overview">
                     <li>
-                        <strong><?php _e('Amount:', 'l2pay'); ?></strong>
+                        <strong><?php esc_html_e('Amount:', 'layer-crypto-checkout'); ?></strong>
                         <?php echo esc_html($crypto_amount); ?> <?php echo esc_html($symbol); ?>
                     </li>
                     <li>
-                        <strong><?php _e('Transaction Hash:', 'l2pay'); ?></strong>
+                        <strong><?php esc_html_e('Transaction Hash:', 'layer-crypto-checkout'); ?></strong>
                         <a href="<?php echo esc_url($explorer_url); ?>" target="_blank">
                             <?php echo esc_html(substr($tx_hash, 0, 20)); ?>...
                         </a>
                     </li>
                     <li>
-                        <strong><?php _e('Network:', 'l2pay'); ?></strong>
+                        <strong><?php esc_html_e('Network:', 'layer-crypto-checkout'); ?></strong>
                         <?php echo esc_html($network_name); ?>
                     </li>
                 </ul>
@@ -750,31 +755,31 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
             return;
         }
 
-        $tx_hash = $order->get_meta('_l2pay_tx_hash');
-        $crypto_amount = $order->get_meta('_l2pay_crypto_amount') ?: $order->get_meta('_l2pay_eth_amount');
-        $symbol = $order->get_meta('_l2pay_symbol');
-        $network_key = $order->get_meta('_l2pay_network') ?: 'sepolia';
-        $network = l2pay_get_network($network_key);
+        $tx_hash = $order->get_meta('_lccp_tx_hash');
+        $crypto_amount = $order->get_meta('_lccp_crypto_amount') ?: $order->get_meta('_lccp_eth_amount');
+        $symbol = $order->get_meta('_lccp_symbol');
+        $network_key = $order->get_meta('_lccp_network') ?: 'sepolia';
+        $network = lccp_get_network($network_key);
 
         if ($tx_hash) {
-            $explorer_url = l2pay_get_tx_url($tx_hash, $network_key);
+            $explorer_url = lccp_get_tx_url($tx_hash, $network_key);
             if (!$symbol) {
                 $symbol = $network ? $network['symbol'] : 'ETH';
             }
             $network_name = $network ? $network['name'] : $network_key;
 
             if ($plain_text) {
-                echo "\n" . __('Payment Details', 'l2pay') . "\n";
-                echo __('Network:', 'l2pay') . ' ' . $network_name . "\n";
-                echo __('Amount:', 'l2pay') . ' ' . $crypto_amount . ' ' . $symbol . "\n";
-                echo __('Transaction:', 'l2pay') . ' ' . $explorer_url . "\n\n";
+                echo "\n" . esc_html__('Payment Details', 'layer-crypto-checkout') . "\n";
+                echo esc_html__('Network:', 'layer-crypto-checkout') . ' ' . esc_html($network_name) . "\n";
+                echo esc_html__('Amount:', 'layer-crypto-checkout') . ' ' . esc_html($crypto_amount) . ' ' . esc_html($symbol) . "\n";
+                echo esc_html__('Transaction:', 'layer-crypto-checkout') . ' ' . esc_url($explorer_url) . "\n\n";
             } else {
                 ?>
-                <h2><?php _e('Payment Details', 'l2pay'); ?></h2>
+                <h2><?php esc_html_e('Payment Details', 'layer-crypto-checkout'); ?></h2>
                 <p>
-                    <strong><?php _e('Network:', 'l2pay'); ?></strong> <?php echo esc_html($network_name); ?><br>
-                    <strong><?php _e('Amount:', 'l2pay'); ?></strong> <?php echo esc_html($crypto_amount); ?> <?php echo esc_html($symbol); ?><br>
-                    <strong><?php _e('Transaction:', 'l2pay'); ?></strong>
+                    <strong><?php esc_html_e('Network:', 'layer-crypto-checkout'); ?></strong> <?php echo esc_html($network_name); ?><br>
+                    <strong><?php esc_html_e('Amount:', 'layer-crypto-checkout'); ?></strong> <?php echo esc_html($crypto_amount); ?> <?php echo esc_html($symbol); ?><br>
+                    <strong><?php esc_html_e('Transaction:', 'layer-crypto-checkout'); ?></strong>
                     <a href="<?php echo esc_url($explorer_url); ?>"><?php echo esc_html(substr($tx_hash, 0, 30)); ?>...</a>
                 </p>
                 <?php
@@ -791,8 +796,9 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
         // Add note that refund must be done manually on blockchain
         $order->add_order_note(
             sprintf(
-                __('Refund requested for %s. Note: Crypto refunds must be processed manually by sending ETH back to the customer wallet.', 'l2pay'),
-                wc_price($amount)
+                /* translators: %s: refund amount */
+                __('Refund requested for %s. Note: Crypto refunds must be processed manually by sending ETH back to the customer wallet.', 'layer-crypto-checkout'),
+                wp_kses_post(wc_price($amount))
             )
         );
 
@@ -805,7 +811,7 @@ class L2Pay_Gateway extends WC_Payment_Gateway {
     private function log($message) {
         if (class_exists('WC_Logger')) {
             $logger = wc_get_logger();
-            $logger->info($message, array('source' => 'l2pay'));
+            $logger->info($message, array('source' => 'layer-crypto-checkout'));
         }
     }
 }

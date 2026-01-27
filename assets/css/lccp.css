@@ -1,10 +1,10 @@
 /**
- * L2Pay Checkout Styles
+ * Layer Crypto Checkout Styles
  */
 
 /* Payment Method Icon in WooCommerce Checkout */
-.wc_payment_method.payment_method_l2pay img,
-.payment_method_l2pay .payment_method_label img {
+.wc_payment_method.payment_method_layer-crypto-checkout img,
+.payment_method_layer-crypto-checkout .payment_method_label img {
     max-height: 24px !important;
     width: auto !important;
     vertical-align: middle;
@@ -12,12 +12,12 @@
 }
 
 /* Container */
-#l2pay-payment-container {
+#lccp-payment-container {
     padding: 10px 0;
 }
 
 /* Selectors Row */
-.l2pay-selectors {
+.lccp-selectors {
     display: flex;
     gap: 16px;
     margin-bottom: 12px;
@@ -25,11 +25,11 @@
 }
 
 /* Payment Type Selector */
-.l2pay-payment-type-selector {
+.lccp-payment-type-selector {
     flex: 0 0 auto;
 }
 
-.l2pay-payment-type-selector > label {
+.lccp-payment-type-selector > label {
     display: block;
     margin-bottom: 4px;
     font-weight: 500;
@@ -37,12 +37,12 @@
     color: #666;
 }
 
-.l2pay-payment-options {
+.lccp-payment-options {
     display: flex;
     gap: 4px;
 }
 
-.l2pay-option {
+.lccp-option {
     display: flex;
     align-items: center;
     padding: 6px 12px;
@@ -54,31 +54,31 @@
     transition: all 0.2s;
 }
 
-.l2pay-option:hover {
+.lccp-option:hover {
     border-color: #627eea;
 }
 
-.l2pay-option input[type="radio"] {
+.lccp-option input[type="radio"] {
     display: none;
 }
 
-.l2pay-option input[type="radio"]:checked + span {
+.lccp-option input[type="radio"]:checked + span {
     color: #627eea;
     font-weight: 600;
 }
 
-.l2pay-option:has(input[type="radio"]:checked) {
+.lccp-option:has(input[type="radio"]:checked) {
     border-color: #627eea;
     background: #f0f4ff;
 }
 
 /* Network Selector */
-.l2pay-network-selector {
+.lccp-network-selector {
     flex: 1;
     min-width: 150px;
 }
 
-.l2pay-network-selector > label {
+.lccp-network-selector > label {
     display: block;
     margin-bottom: 4px;
     font-weight: 500;
@@ -86,7 +86,7 @@
     color: #666;
 }
 
-#l2pay-network {
+#lccp-network {
     width: 100%;
     max-width: 200px;
     padding: 6px 10px;
@@ -96,7 +96,7 @@
 }
 
 /* Wallet Status */
-.l2pay-status {
+.lccp-status {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -106,20 +106,20 @@
     font-size: 12px;
 }
 
-.l2pay-status.disconnected {
+.lccp-status.disconnected {
     background: #fef3f2;
     border: 1px solid #fecaca;
     color: #991b1b;
 }
 
-.l2pay-status.connected {
+.lccp-status.connected {
     background: #f0fdf4;
     border: 1px solid #bbf7d0;
     color: #166534;
 }
 
 /* Price Display */
-.l2pay-price {
+.lccp-price {
     background: #f9f9f9;
     border: 1px solid #eee;
     border-radius: 4px;
@@ -128,30 +128,30 @@
     max-width: 280px;
 }
 
-.l2pay-price-row {
+.lccp-price-row {
     display: flex;
     justify-content: space-between;
     padding: 4px 0;
     font-size: 12px;
 }
 
-.l2pay-label {
+.lccp-label {
     color: #666;
 }
 
-.l2pay-value {
+.lccp-value {
     font-weight: 600;
     color: #333;
 }
 
-.l2pay-rate .l2pay-label,
-.l2pay-rate .l2pay-value {
+.lccp-rate .lccp-label,
+.lccp-rate .lccp-value {
     color: #999;
     font-size: 11px;
 }
 
 /* Button */
-.l2pay-btn {
+.lccp-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -165,36 +165,36 @@
     cursor: pointer;
 }
 
-.l2pay-btn:hover:not(:disabled) {
+.lccp-btn:hover:not(:disabled) {
     background: #5469d4;
 }
 
-.l2pay-btn:disabled {
+.lccp-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-.l2pay-btn.complete {
+.lccp-btn.complete {
     background: #22c55e;
 }
 
 /* Spinner */
-.l2pay-spinner {
+.lccp-spinner {
     display: inline-block;
     width: 14px;
     height: 14px;
     border: 2px solid rgba(255,255,255,0.3);
     border-radius: 50%;
     border-top-color: #fff;
-    animation: l2pay-spin 0.8s linear infinite;
+    animation: lccp-spin 0.8s linear infinite;
 }
 
-@keyframes l2pay-spin {
+@keyframes lccp-spin {
     to { transform: rotate(360deg); }
 }
 
 /* Error */
-.l2pay-error {
+.lccp-error {
     background: #fef2f2;
     border: 1px solid #fecaca;
     border-radius: 4px;

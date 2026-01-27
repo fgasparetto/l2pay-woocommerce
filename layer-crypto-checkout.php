@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: L2Pay - Crypto Payments for WooCommerce
- * Plugin URI: https://wordpress.org/plugins/l2pay
- * Description: Accept ETH and USDC payments via MetaMask on Ethereum, Base, Optimism, and Arbitrum. Non-custodial, low fees (1%), instant settlements.
- * Version: 1.0.0
- * Author: L2Pay
- * Author URI: https://l2pay.io
+ * Plugin Name: Layer Crypto Checkout - Crypto Payments for WooCommerce
+ * Plugin URI: https://wordpress.org/plugins/layer-crypto-checkout
+ * Description: Accept ETH and USDC payments via MetaMask or WalletConnect on Ethereum, Base, Optimism, and Arbitrum. Non-custodial, low fees (1%), instant settlements.
+ * Version: 1.5.0
+ * Author: Layer Crypto Checkout
+ * Author URI: https://layercryptocheckout.com
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: l2pay
+ * Text Domain: layer-crypto-checkout
  * Domain Path: /languages
  * Requires at least: 5.8
  * Requires PHP: 7.4
@@ -21,18 +21,18 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('L2PAY_VERSION', '1.0.0');
-define('L2PAY_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('L2PAY_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('L2PAY_PLUGIN_BASENAME', plugin_basename(__FILE__));
+define('LCCP_VERSION', '1.5.0');
+define('LCCP_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('LCCP_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('LCCP_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
  * Supported networks configuration
  * Contract addresses can be overridden in wp-config.php:
- * define('L2PAY_CONTRACTS', ['sepolia' => '0x...', 'base_sepolia' => '0x...']);
+ * define('LCCP_CONTRACTS', ['sepolia' => '0x...', 'base_sepolia' => '0x...']);
  */
-function l2pay_get_networks() {
-    // Default contract addresses (testnets) - v4.1 with USDC fix
+function lccp_get_networks() {
+    // Default contract addresses (testnets)
     $default_contracts = array(
         'sepolia' => '0x027811E894b6388C514f909d54921a701337f467',
         'base_sepolia' => '0xF0DCC0C62587804d9c49B075d24725A9a6eA2c6E',
@@ -60,12 +60,12 @@ function l2pay_get_networks() {
     );
 
     // Allow override from wp-config.php
-    $contracts = defined('L2PAY_CONTRACTS') ? L2PAY_CONTRACTS : $default_contracts;
+    $contracts = defined('LCCP_CONTRACTS') ? LCCP_CONTRACTS : $default_contracts;
     $contracts = array_merge($default_contracts, $contracts);
 
     // Allow USDC override from wp-config.php
-    if (defined('L2PAY_USDC_ADDRESSES')) {
-        $usdc_addresses = array_merge($usdc_addresses, L2PAY_USDC_ADDRESSES);
+    if (defined('LCCP_USDC_ADDRESSES')) {
+        $usdc_addresses = array_merge($usdc_addresses, LCCP_USDC_ADDRESSES);
     }
 
     return array(
@@ -173,26 +173,26 @@ function l2pay_get_networks() {
 /**
  * Get the current network mode (test or live)
  */
-function l2pay_get_network_mode() {
-    $settings = get_option('woocommerce_l2pay_settings', array());
+function lccp_get_network_mode() {
+    $settings = get_option('woocommerce_layer-crypto-checkout_settings', array());
     return isset($settings['network_mode']) ? $settings['network_mode'] : 'test';
 }
 
 /**
  * Check if we're in test mode
  */
-function l2pay_is_test_mode() {
-    return l2pay_get_network_mode() === 'test';
+function lccp_is_test_mode() {
+    return lccp_get_network_mode() === 'test';
 }
 
 /**
  * Get available networks (with deployed contracts)
  * Filters based on current network mode (test/live)
  */
-function l2pay_get_available_networks($respect_mode = true) {
-    $networks = l2pay_get_networks();
+function lccp_get_available_networks($respect_mode = true) {
+    $networks = lccp_get_networks();
     $available = array();
-    $mode = l2pay_get_network_mode();
+    $mode = lccp_get_network_mode();
 
     foreach ($networks as $key => $network) {
         if (!empty($network['contract'])) {
@@ -216,17 +216,17 @@ function l2pay_get_available_networks($respect_mode = true) {
 /**
  * Get network configuration by key
  */
-function l2pay_get_network($network_key) {
-    $networks = l2pay_get_networks();
+function lccp_get_network($network_key) {
+    $networks = lccp_get_networks();
     return isset($networks[$network_key]) ? $networks[$network_key] : null;
 }
 
 /**
  * Check if WooCommerce is active
  */
-function l2pay_check_woocommerce() {
+function lccp_check_woocommerce() {
     if (!class_exists('WooCommerce')) {
-        add_action('admin_notices', 'l2pay_woocommerce_missing_notice');
+        add_action('admin_notices', 'lccp_woocommerce_missing_notice');
         return false;
     }
     return true;
@@ -235,10 +235,10 @@ function l2pay_check_woocommerce() {
 /**
  * Admin notice for missing WooCommerce
  */
-function l2pay_woocommerce_missing_notice() {
+function lccp_woocommerce_missing_notice() {
     ?>
     <div class="notice notice-error">
-        <p><?php _e('L2Pay Gateway requires WooCommerce to be installed and active.', 'l2pay'); ?></p>
+        <p><?php esc_html_e('Layer Crypto Checkout requires WooCommerce to be installed and active.', 'layer-crypto-checkout'); ?></p>
     </div>
     <?php
 }
@@ -246,54 +246,51 @@ function l2pay_woocommerce_missing_notice() {
 /**
  * Initialize the plugin
  */
-function l2pay_init() {
-    // Load translations
-    load_plugin_textdomain('l2pay', false, dirname(L2PAY_PLUGIN_BASENAME) . '/languages');
-
-    if (!l2pay_check_woocommerce()) {
+function lccp_init() {
+    if (!lccp_check_woocommerce()) {
         return;
     }
 
     // Load the gateway class
-    require_once L2PAY_PLUGIN_DIR . 'includes/class-l2pay-gateway.php';
+    require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-gateway.php';
 
     // Load the API class
-    require_once L2PAY_PLUGIN_DIR . 'includes/class-l2pay-api.php';
+    require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-api.php';
 
     // Initialize API
-    new L2Pay_API();
+    new LCCP_API();
 }
-add_action('plugins_loaded', 'l2pay_init');
+add_action('plugins_loaded', 'lccp_init');
 
 /**
  * Add the gateway to WooCommerce
  */
-function l2pay_add_gateway($gateways) {
-    $gateways[] = 'L2Pay_Gateway';
+function lccp_add_gateway($gateways) {
+    $gateways[] = 'LCCP_Gateway';
     return $gateways;
 }
-add_filter('woocommerce_payment_gateways', 'l2pay_add_gateway');
+add_filter('woocommerce_payment_gateways', 'lccp_add_gateway');
 
 /**
  * Add settings link to plugins page
  */
-function l2pay_plugin_links($links) {
-    $settings_link = '<a href="' . admin_url('admin.php?page=wc-settings&tab=checkout&section=l2pay') . '">' . __('Settings', 'l2pay') . '</a>';
+function lccp_plugin_links($links) {
+    $settings_link = '<a href="' . esc_url(admin_url('admin.php?page=wc-settings&tab=checkout&section=layer-crypto-checkout')) . '">' . esc_html__('Settings', 'layer-crypto-checkout') . '</a>';
     array_unshift($links, $settings_link);
     return $links;
 }
-add_filter('plugin_action_links_' . L2PAY_PLUGIN_BASENAME, 'l2pay_plugin_links');
+add_filter('plugin_action_links_' . LCCP_PLUGIN_BASENAME, 'lccp_plugin_links');
 
 /**
  * Enqueue scripts for checkout
  */
-function l2pay_enqueue_scripts() {
+function lccp_enqueue_scripts() {
     if (!is_checkout()) {
         return;
     }
 
     // Get gateway settings
-    $gateway = new L2Pay_Gateway();
+    $gateway = new LCCP_Gateway();
 
     if ($gateway->enabled !== 'yes') {
         return;
@@ -301,23 +298,23 @@ function l2pay_enqueue_scripts() {
 
     // Enqueue the checkout script
     wp_enqueue_script(
-        'l2pay-checkout',
-        L2PAY_PLUGIN_URL . 'assets/js/l2pay-checkout.js',
+        'lccp-checkout',
+        LCCP_PLUGIN_URL . 'assets/js/lccp-checkout.js',
         array('jquery'),
-        L2PAY_VERSION,
+        LCCP_VERSION,
         true
     );
 
     // Enqueue styles
     wp_enqueue_style(
-        'l2pay-styles',
-        L2PAY_PLUGIN_URL . 'assets/css/l2pay.css',
+        'lccp-styles',
+        LCCP_PLUGIN_URL . 'assets/css/lccp.css',
         array(),
-        L2PAY_VERSION
+        LCCP_VERSION
     );
 
     // Get available networks for checkout
-    $available_networks = l2pay_get_available_networks();
+    $available_networks = lccp_get_available_networks();
     $networks_for_js = array();
     foreach ($available_networks as $key => $network) {
         $networks_for_js[$key] = array(
@@ -335,8 +332,8 @@ function l2pay_enqueue_scripts() {
     }
 
     // Get network mode
-    $network_mode = l2pay_get_network_mode();
-    $is_test_mode = l2pay_is_test_mode();
+    $network_mode = lccp_get_network_mode();
+    $is_test_mode = lccp_is_test_mode();
 
     // Get cart total for fallback
     $cart_total = 0;
@@ -345,45 +342,119 @@ function l2pay_enqueue_scripts() {
     }
 
     // Pass data to JavaScript
-    wp_localize_script('l2pay-checkout', 'l2payData', array(
+    wp_localize_script('lccp-checkout', 'lccpData', array(
+        'pluginUrl' => LCCP_PLUGIN_URL,
         'ajaxUrl' => admin_url('admin-ajax.php'),
-        'restUrl' => rest_url('l2pay/v1/'),
-        'nonce' => wp_create_nonce('l2pay-nonce'),
+        'restUrl' => rest_url('lccp/v1/'),
+        'nonce' => wp_create_nonce('lccp-nonce'),
         'networks' => $networks_for_js,
         'defaultNetwork' => $is_test_mode ? 'base_sepolia' : 'base',
         'merchantAddress' => $gateway->get_option('merchant_address', ''),
         'currency' => get_woocommerce_currency(),
         'cartTotal' => $cart_total,
-        'contractABI' => l2pay_get_contract_abi(),
-        'erc20ABI' => l2pay_get_erc20_abi(),
+        'contractABI' => lccp_get_contract_abi(),
+        'erc20ABI' => lccp_get_erc20_abi(),
         'networkMode' => $network_mode,
         'isTestMode' => $is_test_mode,
+        'walletConnectProjectId' => 'bde3cb22b79eeda9c1dcfce0e9e4cdbd',
         'i18n' => array(
-            'connectWallet' => __('Connect MetaMask', 'l2pay'),
-            'payWithEth' => __('Pay with ETH', 'l2pay'),
-            'payWithUsdc' => __('Pay with USDC', 'l2pay'),
-            'processing' => __('Processing...', 'l2pay'),
-            'approving' => __('Approving USDC...', 'l2pay'),
-            'waitingConfirmation' => __('Waiting for confirmation...', 'l2pay'),
-            'paymentComplete' => __('Payment complete!', 'l2pay'),
-            'installMetamask' => __('Please install MetaMask to pay with crypto', 'l2pay'),
-            'wrongNetwork' => __('Please switch network', 'l2pay'),
-            'transactionFailed' => __('Transaction failed. Please try again.', 'l2pay'),
-            'conversionError' => __('Error getting price. Please try again.', 'l2pay'),
-            'selectNetwork' => __('Select Network', 'l2pay'),
-            'selectPaymentMethod' => __('Payment Method', 'l2pay'),
-            'merchantNotConfigured' => __('Merchant wallet not configured. Please contact store owner.', 'l2pay'),
-            'insufficientUsdc' => __('Insufficient USDC balance', 'l2pay'),
-            'approvalFailed' => __('USDC approval failed. Please try again.', 'l2pay'),
+            'connectWallet' => __('Connect Wallet', 'layer-crypto-checkout'),
+            'payWithEth' => __('Pay with ETH', 'layer-crypto-checkout'),
+            'payWithUsdc' => __('Pay with USDC', 'layer-crypto-checkout'),
+            'processing' => __('Processing...', 'layer-crypto-checkout'),
+            'approving' => __('Approving USDC...', 'layer-crypto-checkout'),
+            'waitingConfirmation' => __('Waiting for confirmation...', 'layer-crypto-checkout'),
+            'paymentComplete' => __('Payment complete!', 'layer-crypto-checkout'),
+            'noWalletFound' => __('No wallet found. Please install MetaMask or use WalletConnect.', 'layer-crypto-checkout'),
+            'wrongNetwork' => __('Please switch network', 'layer-crypto-checkout'),
+            'transactionFailed' => __('Transaction failed. Please try again.', 'layer-crypto-checkout'),
+            'conversionError' => __('Error getting price. Please try again.', 'layer-crypto-checkout'),
+            'selectNetwork' => __('Select Network', 'layer-crypto-checkout'),
+            'selectPaymentMethod' => __('Payment Method', 'layer-crypto-checkout'),
+            'merchantNotConfigured' => __('Merchant wallet not configured. Please contact store owner.', 'layer-crypto-checkout'),
+            'insufficientUsdc' => __('Insufficient USDC balance', 'layer-crypto-checkout'),
+            'approvalFailed' => __('USDC approval failed. Please try again.', 'layer-crypto-checkout'),
+            'connecting' => __('Connecting...', 'layer-crypto-checkout'),
+            'disconnected' => __('Wallet disconnected', 'layer-crypto-checkout'),
         ),
     ));
 }
-add_action('wp_enqueue_scripts', 'l2pay_enqueue_scripts');
+add_action('wp_enqueue_scripts', 'lccp_enqueue_scripts');
+
+/**
+ * Enqueue WalletConnect scripts
+ */
+function lccp_enqueue_walletconnect() {
+    if (!is_checkout()) {
+        return;
+    }
+
+    $gateway = new LCCP_Gateway();
+    if ($gateway->enabled !== 'yes') {
+        return;
+    }
+
+    // Enqueue WalletConnect from local file
+    wp_enqueue_script(
+        'walletconnect-provider',
+        LCCP_PLUGIN_URL . 'assets/js/vendor/walletconnect-provider.min.js',
+        array(),
+        '2.17.0',
+        false
+    );
+
+    // Add polyfill before WalletConnect loads
+    wp_add_inline_script('walletconnect-provider', '
+        if (typeof process === "undefined") {
+            window.process = { env: {}, browser: true };
+        }
+        if (typeof global === "undefined") {
+            window.global = window;
+        }
+    ', 'before');
+}
+add_action('wp_enqueue_scripts', 'lccp_enqueue_walletconnect', 5);
+
+/**
+ * Add WalletConnect configuration via wp_add_inline_script
+ */
+function lccp_add_walletconnect_config() {
+    if (!is_checkout()) {
+        return;
+    }
+
+    $gateway = new LCCP_Gateway();
+    if ($gateway->enabled !== 'yes') {
+        return;
+    }
+
+    $is_test_mode = lccp_is_test_mode();
+    $chain_ids = $is_test_mode
+        ? '[11155111, 84532, 11155420, 421614]'
+        : '[1, 8453, 10, 42161]';
+    $default_chain = $is_test_mode ? '11155111' : '1';
+
+    $inline_script = sprintf(
+        'window.LCCPWalletConfig = {
+            projectId: "%s",
+            chainIds: %s,
+            isTestMode: %s,
+            defaultChainId: %s
+        };',
+        esc_js('bde3cb22b79eeda9c1dcfce0e9e4cdbd'),
+        $chain_ids,
+        $is_test_mode ? 'true' : 'false',
+        $default_chain
+    );
+
+    wp_add_inline_script('walletconnect-provider', $inline_script, 'after');
+}
+add_action('wp_enqueue_scripts', 'lccp_add_walletconnect_config', 6);
 
 /**
  * Get the contract ABI (pay and payWithToken functions)
  */
-function l2pay_get_contract_abi() {
+function lccp_get_contract_abi() {
     return json_encode(array(
         // pay(uint256,address) - ETH payments
         array(
@@ -446,7 +517,7 @@ function l2pay_get_contract_abi() {
 /**
  * Get ERC20 token ABI (approve and balanceOf)
  */
-function l2pay_get_erc20_abi() {
+function lccp_get_erc20_abi() {
     return json_encode(array(
         // approve(address,uint256)
         array(
@@ -494,10 +565,10 @@ function l2pay_get_erc20_abi() {
 /**
  * Get explorer URL for a transaction
  */
-function l2pay_get_tx_url($tx_hash, $network_key = 'sepolia') {
-    $network = l2pay_get_network($network_key);
+function lccp_get_tx_url($tx_hash, $network_key = 'sepolia') {
+    $network = lccp_get_network($network_key);
     if (!$network) {
-        $network = l2pay_get_network('sepolia');
+        $network = lccp_get_network('sepolia');
     }
     return $network['explorer'] . '/tx/' . $tx_hash;
 }
@@ -505,10 +576,10 @@ function l2pay_get_tx_url($tx_hash, $network_key = 'sepolia') {
 /**
  * Get explorer URL for an address
  */
-function l2pay_get_address_url($address, $network_key = 'sepolia') {
-    $network = l2pay_get_network($network_key);
+function lccp_get_address_url($address, $network_key = 'sepolia') {
+    $network = lccp_get_network($network_key);
     if (!$network) {
-        $network = l2pay_get_network('sepolia');
+        $network = lccp_get_network('sepolia');
     }
     return $network['explorer'] . '/address/' . $address;
 }
@@ -519,15 +590,15 @@ function l2pay_get_address_url($address, $network_key = 'sepolia') {
  * This endpoint is kept for backwards compatibility but now performs
  * on-chain verification before completing the order.
  *
- * The main verification happens in L2Pay_Gateway::process_payment()
+ * The main verification happens in LCCP_Gateway::process_payment()
  * which is called when the checkout form is submitted.
  */
-function l2pay_verify_payment() {
-    check_ajax_referer('l2pay-nonce', 'nonce');
+function lccp_verify_payment() {
+    check_ajax_referer('lccp-nonce', 'nonce');
 
     $order_id = isset($_POST['order_id']) ? absint($_POST['order_id']) : 0;
-    $tx_hash = isset($_POST['tx_hash']) ? sanitize_text_field($_POST['tx_hash']) : '';
-    $network_key = isset($_POST['network']) ? sanitize_text_field($_POST['network']) : 'sepolia';
+    $tx_hash = isset($_POST['tx_hash']) ? sanitize_text_field(wp_unslash($_POST['tx_hash'])) : '';
+    $network_key = isset($_POST['network']) ? sanitize_text_field(wp_unslash($_POST['network'])) : 'sepolia';
 
     if (!$order_id || !$tx_hash) {
         wp_send_json_error(array('message' => 'Invalid parameters'));
@@ -545,7 +616,7 @@ function l2pay_verify_payment() {
     }
 
     // Check if already verified
-    if ($order->get_meta('_l2pay_verified') === 'yes') {
+    if ($order->get_meta('_lccp_verified') === 'yes') {
         wp_send_json_success(array(
             'message' => 'Payment already verified',
             'redirect' => $order->get_checkout_order_received_url()
@@ -554,8 +625,8 @@ function l2pay_verify_payment() {
     }
 
     // SECURITY: Perform on-chain verification before completing
-    $gateway = new L2Pay_Gateway();
-    $network = l2pay_get_network($network_key);
+    $gateway = new LCCP_Gateway();
+    $network = lccp_get_network($network_key);
 
     if (!$network || empty($network['contract'])) {
         wp_send_json_error(array('message' => 'Invalid network configuration'));
@@ -640,20 +711,21 @@ function l2pay_verify_payment() {
     }
 
     // All verifications passed - update order
-    $explorer_url = l2pay_get_tx_url($tx_hash, $network_key);
+    $explorer_url = lccp_get_tx_url($tx_hash, $network_key);
 
-    $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-    $order->update_meta_data('_l2pay_network', $network_key);
-    $order->update_meta_data('_l2pay_verified', 'yes');
-    $order->update_meta_data('_l2pay_verified_at', time());
-    $order->update_meta_data('_l2pay_payment_time', current_time('mysql'));
+    $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+    $order->update_meta_data('_lccp_network', $network_key);
+    $order->update_meta_data('_lccp_verified', 'yes');
+    $order->update_meta_data('_lccp_verified_at', time());
+    $order->update_meta_data('_lccp_payment_time', current_time('mysql'));
 
     $order->payment_complete($tx_hash);
     $order->add_order_note(
         sprintf(
-            __('L2Pay payment verified on-chain (%s). Transaction: %s', 'l2pay'),
-            $network['name'],
-            '<a href="' . $explorer_url . '" target="_blank">' . substr($tx_hash, 0, 20) . '...</a>'
+            /* translators: 1: network name, 2: transaction link */
+            __('Layer Crypto Checkout payment verified on-chain (%1$s). Transaction: %2$s', 'layer-crypto-checkout'),
+            esc_html($network['name']),
+            '<a href="' . esc_url($explorer_url) . '" target="_blank">' . esc_html(substr($tx_hash, 0, 20)) . '...</a>'
         )
     );
 
@@ -667,20 +739,20 @@ function l2pay_verify_payment() {
         'redirect' => $order->get_checkout_order_received_url()
     ));
 }
-add_action('wp_ajax_l2pay_verify_payment', 'l2pay_verify_payment');
-add_action('wp_ajax_nopriv_l2pay_verify_payment', 'l2pay_verify_payment');
+add_action('wp_ajax_lccp_verify_payment', 'lccp_verify_payment');
+add_action('wp_ajax_nopriv_lccp_verify_payment', 'lccp_verify_payment');
 
 /**
  * Display transaction hash on order details
  */
-function l2pay_display_tx_hash($order) {
-    $tx_hash = $order->get_meta('_l2pay_tx_hash');
-    $network_key = $order->get_meta('_l2pay_network') ?: 'sepolia';
-    $network = l2pay_get_network($network_key);
+function lccp_display_tx_hash($order) {
+    $tx_hash = $order->get_meta('_lccp_tx_hash');
+    $network_key = $order->get_meta('_lccp_network') ?: 'sepolia';
+    $network = lccp_get_network($network_key);
 
     if ($tx_hash) {
-        $explorer_url = l2pay_get_tx_url($tx_hash, $network_key);
-        echo '<p><strong>' . __('Transaction Hash:', 'l2pay') . '</strong><br>';
+        $explorer_url = lccp_get_tx_url($tx_hash, $network_key);
+        echo '<p><strong>' . esc_html__('Transaction Hash:', 'layer-crypto-checkout') . '</strong><br>';
         echo '<a href="' . esc_url($explorer_url) . '" target="_blank">' . esc_html($tx_hash) . '</a>';
         if ($network) {
             echo '<br><small>(' . esc_html($network['name']) . ')</small>';
@@ -688,40 +760,40 @@ function l2pay_display_tx_hash($order) {
         echo '</p>';
     }
 }
-add_action('woocommerce_order_details_after_order_table', 'l2pay_display_tx_hash');
+add_action('woocommerce_order_details_after_order_table', 'lccp_display_tx_hash');
 
 /**
  * Display transaction hash in admin order page
  */
-function l2pay_admin_order_data($order) {
-    $tx_hash = $order->get_meta('_l2pay_tx_hash');
-    $eth_amount = $order->get_meta('_l2pay_eth_amount');
-    $network_key = $order->get_meta('_l2pay_network') ?: 'sepolia';
-    $network = l2pay_get_network($network_key);
+function lccp_admin_order_data($order) {
+    $tx_hash = $order->get_meta('_lccp_tx_hash');
+    $eth_amount = $order->get_meta('_lccp_eth_amount');
+    $network_key = $order->get_meta('_lccp_network') ?: 'sepolia';
+    $network = lccp_get_network($network_key);
 
     if ($tx_hash || $eth_amount) {
         echo '<div class="order_data_column">';
-        echo '<h4>' . __('L2Pay Payment', 'l2pay') . '</h4>';
+        echo '<h4>' . esc_html__('Layer Crypto Checkout Payment', 'layer-crypto-checkout') . '</h4>';
 
         if ($network) {
-            echo '<p><strong>' . __('Network:', 'l2pay') . '</strong> ' . esc_html($network['name']) . '</p>';
+            echo '<p><strong>' . esc_html__('Network:', 'layer-crypto-checkout') . '</strong> ' . esc_html($network['name']) . '</p>';
         }
 
         if ($eth_amount) {
             $symbol = $network ? $network['symbol'] : 'ETH';
-            echo '<p><strong>' . __('Amount:', 'l2pay') . '</strong> ' . esc_html($eth_amount) . ' ' . esc_html($symbol) . '</p>';
+            echo '<p><strong>' . esc_html__('Amount:', 'layer-crypto-checkout') . '</strong> ' . esc_html($eth_amount) . ' ' . esc_html($symbol) . '</p>';
         }
 
         if ($tx_hash) {
-            $explorer_url = l2pay_get_tx_url($tx_hash, $network_key);
-            echo '<p><strong>' . __('Transaction:', 'l2pay') . '</strong><br>';
+            $explorer_url = lccp_get_tx_url($tx_hash, $network_key);
+            echo '<p><strong>' . esc_html__('Transaction:', 'layer-crypto-checkout') . '</strong><br>';
             echo '<a href="' . esc_url($explorer_url) . '" target="_blank" style="word-break: break-all;">' . esc_html($tx_hash) . '</a></p>';
         }
 
         echo '</div>';
     }
 }
-add_action('woocommerce_admin_order_data_after_shipping_address', 'l2pay_admin_order_data');
+add_action('woocommerce_admin_order_data_after_shipping_address', 'lccp_admin_order_data');
 
 /**
  * Declare HPOS compatibility

@@ -1,10 +1,10 @@
 <?php
 /**
- * L2Pay REST API
+ * Layer Crypto Checkout REST API
  *
  * Handles price conversion and payment verification endpoints
  *
- * @package L2Pay
+ * @package LayerCryptoCheckout
  */
 
 if (!defined('ABSPATH')) {
@@ -12,19 +12,19 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * L2Pay API Class
+ * LCC API Class
  */
-class L2Pay_API {
+class LCCP_API {
 
     /**
      * Cache key for ETH price
      */
-    const PRICE_CACHE_KEY = 'l2pay_eth_price';
+    const PRICE_CACHE_KEY = 'lccp_eth_price';
 
     /**
      * Cache key for EUR/USD rate
      */
-    const EUR_USD_CACHE_KEY = 'l2pay_eur_usd_rate';
+    const EUR_USD_CACHE_KEY = 'lccp_eur_usd_rate';
 
     /**
      * Constructor
@@ -38,7 +38,7 @@ class L2Pay_API {
      */
     public function register_routes() {
         // Get ETH price
-        register_rest_route('l2pay/v1', '/price', array(
+        register_rest_route('lccp/v1', '/price', array(
             'methods' => 'GET',
             'callback' => array($this, 'get_eth_price'),
             'permission_callback' => '__return_true',
@@ -51,7 +51,7 @@ class L2Pay_API {
         ));
 
         // Convert amount to ETH
-        register_rest_route('l2pay/v1', '/convert', array(
+        register_rest_route('lccp/v1', '/convert', array(
             'methods' => 'GET',
             'callback' => array($this, 'convert_to_eth'),
             'permission_callback' => '__return_true',
@@ -68,7 +68,7 @@ class L2Pay_API {
         ));
 
         // Convert amount to USDC
-        register_rest_route('l2pay/v1', '/convert-usdc', array(
+        register_rest_route('lccp/v1', '/convert-usdc', array(
             'methods' => 'GET',
             'callback' => array($this, 'convert_to_usdc'),
             'permission_callback' => '__return_true',
@@ -85,10 +85,13 @@ class L2Pay_API {
         ));
 
         // Verify transaction
-        register_rest_route('l2pay/v1', '/verify', array(
+        // Note: Uses __return_true because this is a public checkout endpoint (supports guest checkout).
+        // Security is enforced through on-chain transaction verification: the endpoint validates
+        // transaction existence on blockchain, merchant address match, and order ID in contract event.
+        register_rest_route('lccp/v1', '/verify', array(
             'methods' => 'POST',
             'callback' => array($this, 'verify_transaction'),
-            'permission_callback' => array($this, 'verify_nonce'),
+            'permission_callback' => '__return_true',
             'args' => array(
                 'tx_hash' => array(
                     'required' => true,
@@ -102,10 +105,12 @@ class L2Pay_API {
         ));
 
         // Create pending order
-        register_rest_route('l2pay/v1', '/create-order', array(
+        // Note: Uses __return_true because this is a public checkout endpoint (supports guest checkout).
+        // The endpoint only returns price conversion data and does not create actual orders.
+        register_rest_route('lccp/v1', '/create-order', array(
             'methods' => 'POST',
             'callback' => array($this, 'create_pending_order'),
-            'permission_callback' => array($this, 'verify_nonce'),
+            'permission_callback' => '__return_true',
         ));
     }
 
@@ -114,23 +119,6 @@ class L2Pay_API {
      */
     public function sanitize_float($value) {
         return floatval($value);
-    }
-
-    /**
-     * Verify nonce for protected endpoints
-     */
-    public function verify_nonce($request) {
-        $nonce = $request->get_header('X-WP-Nonce');
-
-        if (!$nonce) {
-            $nonce = $request->get_param('nonce');
-        }
-
-        if (!wp_verify_nonce($nonce, 'wp_rest')) {
-            return new WP_Error('invalid_nonce', 'Invalid security token', array('status' => 403));
-        }
-
-        return true;
     }
 
     /**
@@ -171,7 +159,7 @@ class L2Pay_API {
         }
 
         // Get cache duration from settings
-        $gateway = new L2Pay_Gateway();
+        $gateway = new LCCP_Gateway();
         $cache_duration = intval($gateway->get_option('price_cache_duration', 60));
 
         // Cache the price
@@ -201,7 +189,7 @@ class L2Pay_API {
         }
 
         // Get ETH price
-        $price_request = new WP_REST_Request('GET', '/l2pay/v1/price');
+        $price_request = new WP_REST_Request('GET', '/lcc/v1/price');
         $price_request->set_param('currency', $currency);
         $price_response = $this->get_eth_price($price_request);
         $price_data = $price_response->get_data();
@@ -216,7 +204,7 @@ class L2Pay_API {
         $eth_price = $price_data['price'];
 
         // Get price margin from settings
-        $gateway = new L2Pay_Gateway();
+        $gateway = new LCCP_Gateway();
         $margin = floatval($gateway->get_option('price_margin', 2));
 
         // Calculate ETH amount
@@ -283,7 +271,7 @@ class L2Pay_API {
         }
 
         // Get price margin from settings
-        $gateway = new L2Pay_Gateway();
+        $gateway = new LCCP_Gateway();
         $margin = floatval($gateway->get_option('price_margin', 2));
 
         // Apply margin (increase USDC amount to account for any slippage)
@@ -660,7 +648,7 @@ class L2Pay_API {
         }
 
         // Get gateway settings
-        $gateway = new L2Pay_Gateway();
+        $gateway = new LCCP_Gateway();
         $network = $gateway->get_option('network', 'base_sepolia');
         $merchant_address = strtolower($gateway->get_option('merchant_wallet', ''));
         $contract_address = strtolower($gateway->get_option('contract_address', ''));
@@ -669,9 +657,9 @@ class L2Pay_API {
         $receipt = $this->get_transaction_receipt($network, $tx_hash);
 
         if (is_wp_error($receipt)) {
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'error');
-            $order->update_meta_data('_l2pay_verify_error', $receipt->get_error_message());
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'error');
+            $order->update_meta_data('_lccp_verify_error', $receipt->get_error_message());
             $order->save();
 
             return rest_ensure_response(array(
@@ -682,8 +670,8 @@ class L2Pay_API {
 
         if ($receipt === null) {
             // Transaction not yet mined
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'pending');
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'pending');
             $order->save();
 
             return rest_ensure_response(array(
@@ -697,9 +685,9 @@ class L2Pay_API {
         $tx_status = $this->hex_to_int($receipt['status'] ?? '0x0');
 
         if ($tx_status !== '1') {
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'failed');
-            $order->add_order_note('L2Pay: Transaction failed on blockchain');
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'failed');
+            $order->add_order_note('Layer Crypto Checkout: Transaction failed on blockchain');
             $order->save();
 
             return rest_ensure_response(array(
@@ -711,9 +699,9 @@ class L2Pay_API {
         // Verify transaction was sent to our contract
         $tx_to = strtolower($receipt['to'] ?? '');
         if ($tx_to !== $contract_address) {
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'invalid');
-            $order->add_order_note('L2Pay: Transaction sent to wrong contract address');
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'invalid');
+            $order->add_order_note('Layer Crypto Checkout: Transaction sent to wrong contract address');
             $order->save();
 
             return rest_ensure_response(array(
@@ -743,9 +731,9 @@ class L2Pay_API {
         }
 
         if ($payment_data === null) {
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'invalid');
-            $order->add_order_note('L2Pay: No valid payment event found in transaction');
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'invalid');
+            $order->add_order_note('Layer Crypto Checkout: No valid payment event found in transaction');
             $order->save();
 
             return rest_ensure_response(array(
@@ -756,10 +744,10 @@ class L2Pay_API {
 
         // Verify order ID matches
         if ($payment_data['order_id'] !== strval($order_id)) {
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'invalid');
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'invalid');
             $order->add_order_note(sprintf(
-                'L2Pay: Order ID mismatch. Expected %d, got %s',
+                'Layer Crypto Checkout: Order ID mismatch. Expected %d, got %s',
                 $order_id,
                 $payment_data['order_id']
             ));
@@ -773,9 +761,9 @@ class L2Pay_API {
 
         // Verify merchant address matches
         if (strtolower($payment_data['merchant']) !== $merchant_address) {
-            $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-            $order->update_meta_data('_l2pay_verified', 'invalid');
-            $order->add_order_note('L2Pay: Merchant address mismatch');
+            $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+            $order->update_meta_data('_lccp_verified', 'invalid');
+            $order->add_order_note('Layer Crypto Checkout: Merchant address mismatch');
             $order->save();
 
             return rest_ensure_response(array(
@@ -785,8 +773,8 @@ class L2Pay_API {
         }
 
         // Get expected amount from order meta
-        $expected_amount = $order->get_meta('_l2pay_amount');
-        $payment_type = $order->get_meta('_l2pay_payment_type') ?: 'eth';
+        $expected_amount = $order->get_meta('_lccp_amount');
+        $payment_type = $order->get_meta('_lccp_payment_type') ?: 'eth';
 
         // Verify amount (with small tolerance for rounding)
         if ($expected_amount) {
@@ -797,10 +785,10 @@ class L2Pay_API {
             $min_amount = bcmul($expected_int, '0.999', 0);
 
             if (bccomp($received_amount, $min_amount) < 0) {
-                $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-                $order->update_meta_data('_l2pay_verified', 'underpaid');
+                $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+                $order->update_meta_data('_lccp_verified', 'underpaid');
                 $order->add_order_note(sprintf(
-                    'L2Pay: Underpaid. Expected %s, received %s',
+                    'Layer Crypto Checkout: Underpaid. Expected %s, received %s',
                     $expected_amount,
                     $received_amount
                 ));
@@ -816,17 +804,17 @@ class L2Pay_API {
         }
 
         // All verifications passed - mark order as verified and complete
-        $order->update_meta_data('_l2pay_tx_hash', $tx_hash);
-        $order->update_meta_data('_l2pay_verified', 'yes');
-        $order->update_meta_data('_l2pay_verified_at', time());
-        $order->update_meta_data('_l2pay_payer', $payment_data['payer']);
-        $order->update_meta_data('_l2pay_amount_received', $payment_data['amount']);
-        $order->update_meta_data('_l2pay_merchant_amount', $payment_data['merchant_amount']);
-        $order->update_meta_data('_l2pay_platform_fee', $payment_data['platform_fee']);
-        $order->update_meta_data('_l2pay_block_number', $this->hex_to_int($receipt['blockNumber']));
+        $order->update_meta_data('_lccp_tx_hash', $tx_hash);
+        $order->update_meta_data('_lccp_verified', 'yes');
+        $order->update_meta_data('_lccp_verified_at', time());
+        $order->update_meta_data('_lccp_payer', $payment_data['payer']);
+        $order->update_meta_data('_lccp_amount_received', $payment_data['amount']);
+        $order->update_meta_data('_lccp_merchant_amount', $payment_data['merchant_amount']);
+        $order->update_meta_data('_lccp_platform_fee', $payment_data['platform_fee']);
+        $order->update_meta_data('_lccp_block_number', $this->hex_to_int($receipt['blockNumber']));
 
         if ($payment_data['type'] === 'token') {
-            $order->update_meta_data('_l2pay_token_address', $payment_data['token']);
+            $order->update_meta_data('_lccp_token_address', $payment_data['token']);
         }
 
         // Mark payment as complete
@@ -839,7 +827,7 @@ class L2Pay_API {
         $amount_formatted = bcdiv($payment_data['amount'], bcpow('10', $decimals), $decimals);
 
         $order->add_order_note(sprintf(
-            'L2Pay: Payment verified on-chain. Amount: %s %s. TX: %s',
+            'Layer Crypto Checkout: Payment verified on-chain. Amount: %s %s. TX: %s',
             $amount_formatted,
             $symbol,
             $explorer_url
@@ -880,7 +868,7 @@ class L2Pay_API {
         $total = WC()->cart->get_total('edit');
         $currency = get_woocommerce_currency();
 
-        $convert_request = new WP_REST_Request('GET', '/l2pay/v1/convert');
+        $convert_request = new WP_REST_Request('GET', '/lcc/v1/convert');
         $convert_request->set_param('amount', $total);
         $convert_request->set_param('currency', $currency);
         $convert_response = $this->convert_to_eth($convert_request);

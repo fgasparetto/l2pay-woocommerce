@@ -1,15 +1,16 @@
 /**
- * L2Pay Checkout - MetaMask Integration
+ * Layer Crypto Checkout - Wallet Integration (MetaMask + WalletConnect)
  *
  * Handles wallet connection, price conversion, and payment processing
  * Supports ETH and USDC payments on multiple blockchain networks
+ * Uses Web3Modal v1.x for multi-wallet support
  */
 
 (function($) {
     'use strict';
 
     // State management
-    const L2Pay = {
+    const LCCP = {
         isConnected: false,
         account: null,
         ethAmount: null,
@@ -20,6 +21,12 @@
         initialized: false,
         selectedNetwork: null,
         paymentType: 'eth', // 'eth' or 'usdc'
+        connectionType: null, // 'metamask' or 'walletconnect'
+        walletConfig: null,
+        wcProviderClass: null,
+        wcProvider: null,
+        provider: null,
+        listenersSetup: false,
 
         /**
          * Initialize the payment handler
@@ -27,28 +34,38 @@
         init: function() {
             const self = this;
 
+            // Initialize Web3Modal for WalletConnect support
+            this.initWeb3Modal();
+
             // Use event delegation for dynamic elements
-            $(document).on('click', '#l2pay-connect-btn', function(e) {
+            $(document).on('click', '#lccp-connect-btn', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 self.handleConnectClick();
             });
 
+            // Disconnect button
+            $(document).on('click', '#lccp-disconnect-btn', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                self.disconnect();
+            });
+
             // Listen for network selector change
-            $(document).on('change', '#l2pay-network', function() {
+            $(document).on('change', '#lccp-network', function() {
                 const networkKey = $(this).val();
                 self.onNetworkChange(networkKey);
             });
 
             // Listen for payment type change
-            $(document).on('change', 'input[name="l2pay_payment_type"]', function() {
+            $(document).on('change', 'input[name="lccp_payment_type"]', function() {
                 const paymentType = $(this).val();
                 self.onPaymentTypeChange(paymentType);
             });
 
             // Listen for payment method change
             $(document).on('change', 'input[name="payment_method"]', function() {
-                if ($(this).val() === 'l2pay') {
+                if ($(this).val() === 'layer-crypto-checkout') {
                     self.onPaymentMethodSelected();
                 }
             });
@@ -56,7 +73,7 @@
             // Check if already selected on page load
             $(document).ready(function() {
                 setTimeout(function() {
-                    if ($('input[name="payment_method"]:checked').val() === 'l2pay') {
+                    if ($('input[name="payment_method"]:checked').val() === 'layer-crypto-checkout') {
                         self.onPaymentMethodSelected();
                     }
                 }, 500);
@@ -64,47 +81,128 @@
 
             // Listen for checkout updates
             $(document.body).on('updated_checkout', function() {
-                if ($('input[name="payment_method"]:checked').val() === 'l2pay') {
+                if ($('input[name="payment_method"]:checked').val() === 'layer-crypto-checkout') {
                     self.onPaymentMethodSelected();
                 }
             });
 
-            // Setup MetaMask event listeners after first check
-            self.setupProviderListeners = function() {
-                if (self.provider && !self.listenersSetup) {
-                    self.provider.on('accountsChanged', function(accounts) {
-                        if (accounts.length === 0) {
-                            self.disconnect();
-                        } else {
-                            self.account = accounts[0];
-                            self.updateUI();
-                        }
-                    });
-
-                    self.provider.on('chainChanged', function(chainId) {
-                        self.syncNetworkSelector(chainId);
-                    });
-
-                    self.listenersSetup = true;
-                }
-            };
-
             // Form validation
-            $(document).on('checkout_place_order_l2pay', function() {
+            $(document).on('checkout_place_order_layer-crypto-checkout', function() {
                 return self.validatePayment();
             });
 
         },
 
         /**
+         * Initialize wallet connection options
+         */
+        initWeb3Modal: function() {
+            const self = this;
+
+            // Check if WalletConnect libraries are loaded
+            const checkLibraries = function() {
+                if (window.LCCPWalletConfig) {
+                    self.walletConfig = window.LCCPWalletConfig;
+                    console.log('LCCP: Wallet config ready');
+
+                    // Check for WalletConnect ethereum provider
+                    if (window.EthereumProvider) {
+                        self.wcProviderClass = window.EthereumProvider.EthereumProvider || window.EthereumProvider;
+                        console.log('LCCP: WalletConnect provider available');
+                    }
+
+                    return true;
+                }
+                return false;
+            };
+
+            // Try immediately
+            if (!checkLibraries()) {
+                let attempts = 0;
+                const interval = setInterval(function() {
+                    attempts++;
+                    if (checkLibraries() || attempts >= 10) {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+
+            // Create wallet selection modal
+            this.createWalletModal();
+        },
+
+        /**
+         * Create the wallet selection modal HTML
+         */
+        createWalletModal: function() {
+            if ($('#lccp-wallet-modal').length) return;
+
+            const modalHtml = `
+                <div id="lccp-wallet-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:99999; align-items:center; justify-content:center;">
+                    <div style="background:white; border-radius:16px; padding:24px; max-width:360px; width:90%; box-shadow:0 10px 40px rgba(0,0,0,0.2);">
+                        <h3 style="margin:0 0 20px; font-size:18px; text-align:center;">Connect Wallet</h3>
+                        <button id="lccp-connect-metamask" style="width:100%; padding:14px; margin-bottom:12px; border:1px solid #e5e5e5; border-radius:12px; background:white; cursor:pointer; display:flex; align-items:center; gap:12px; font-size:16px; transition:background 0.2s;">
+                            <img src="${lccpData.pluginUrl}assets/images/metamask.svg" style="width:32px; height:32px;">
+                            <span>MetaMask</span>
+                        </button>
+                        <button id="lccp-connect-walletconnect" style="width:100%; padding:14px; border:1px solid #e5e5e5; border-radius:12px; background:white; cursor:pointer; display:flex; align-items:center; gap:12px; font-size:16px; transition:background 0.2s;">
+                            <img src="${lccpData.pluginUrl}assets/images/walletconnect.png" style="width:32px; height:32px; border-radius:8px;">
+                            <span>WalletConnect</span>
+                        </button>
+                        <button id="lccp-modal-close" style="width:100%; padding:10px; margin-top:16px; border:none; background:none; cursor:pointer; color:#666; font-size:14px;">Cancel</button>
+                    </div>
+                </div>
+            `;
+            $('body').append(modalHtml);
+
+            // Add hover effects
+            $('#lccp-connect-metamask, #lccp-connect-walletconnect').hover(
+                function() { $(this).css('background', '#f5f5f5'); },
+                function() { $(this).css('background', 'white'); }
+            );
+
+            // Event handlers
+            const self = this;
+            $('#lccp-wallet-modal').on('click', function(e) {
+                if (e.target === this) self.hideWalletModal();
+            });
+            $('#lccp-modal-close').on('click', function() {
+                self.hideWalletModal();
+            });
+            $('#lccp-connect-metamask').on('click', function() {
+                self.hideWalletModal();
+                self.connectMetaMask();
+            });
+            $('#lccp-connect-walletconnect').on('click', function() {
+                self.hideWalletModal();
+                self.connectWalletConnect();
+            });
+        },
+
+        /**
+         * Show wallet selection modal
+         */
+        showWalletModal: function() {
+            $('#lccp-wallet-modal').css('display', 'flex');
+        },
+
+        /**
+         * Hide wallet selection modal
+         */
+        hideWalletModal: function() {
+            $('#lccp-wallet-modal').hide();
+            this.setButtonState('connect');
+        },
+
+        /**
          * Get the currently selected network configuration
          */
         getSelectedNetwork: function() {
-            const networkKey = $('#l2pay-network').val() || l2payData.defaultNetwork || 'sepolia';
-            const network = l2payData.networks[networkKey];
+            const networkKey = $('#lccp-network').val() || lccpData.defaultNetwork || 'sepolia';
+            const network = lccpData.networks[networkKey];
             if (!network) {
-                console.error('L2Pay: Network not found:', networkKey);
-                return l2payData.networks['sepolia'] || {};
+                console.error('LCCP: Network not found:', networkKey);
+                return lccpData.networks['sepolia'] || {};
             }
             return {
                 key: networkKey,
@@ -126,9 +224,9 @@
          */
         onNetworkChange: async function(networkKey) {
             const self = this;
-            const network = l2payData.networks[networkKey];
+            const network = lccpData.networks[networkKey];
             if (!network) {
-                console.error('L2Pay: Network not found:', networkKey);
+                console.error('LCCP: Network not found:', networkKey);
                 return;
             }
 
@@ -141,13 +239,13 @@
             this.usdcSmallestUnit = null;
 
             // If connected, switch network and refresh conversion
-            if (this.isConnected) {
+            if (this.isConnected && this.provider) {
                 try {
                     await self.ensureCorrectNetwork();
                     await self.fetchConversion();
                 } catch (err) {
-                    console.error('L2Pay: Network switch failed:', err);
-                    self.showError('Failed to switch network. Please switch manually in MetaMask.');
+                    console.error('LCCP: Network switch failed:', err);
+                    self.showError('Failed to switch network. Please switch manually in your wallet.');
                 }
             }
         },
@@ -159,7 +257,7 @@
             this.paymentType = paymentType;
 
             // Update the hidden field for form submission
-            $('#l2pay-payment-type').val(paymentType);
+            $('#lccp-payment-type').val(paymentType);
 
             // Reset amounts
             this.ethAmount = null;
@@ -177,13 +275,13 @@
         },
 
         /**
-         * Sync network selector when user changes chain in MetaMask
+         * Sync network selector when user changes chain in wallet
          */
         syncNetworkSelector: function(chainId) {
-            const networks = l2payData.networks;
+            const networks = lccpData.networks;
             for (const key in networks) {
                 if (networks[key].chainId === chainId) {
-                    $('#l2pay-network').val(key);
+                    $('#lccp-network').val(key);
                     this.selectedNetwork = networks[key];
                     this.fetchConversion();
                     return;
@@ -193,18 +291,19 @@
         },
 
         /**
-         * Called when L2Pay payment method is selected
+         * Called when Layer Crypto Checkout payment method is selected
          */
         onPaymentMethodSelected: function() {
-            this.checkMetaMask();
-
             // Initialize selected network
             const network = this.getSelectedNetwork();
             this.selectedNetwork = network;
 
             // Check current payment type
-            const paymentType = $('input[name="l2pay_payment_type"]:checked').val() || 'eth';
+            const paymentType = $('input[name="lccp_payment_type"]:checked').val() || 'eth';
             this.paymentType = paymentType;
+
+            // Check if already connected (e.g., from previous session)
+            this.checkExistingConnection();
 
             if (this.isConnected) {
                 this.updateUI();
@@ -213,64 +312,96 @@
         },
 
         /**
-         * Get DOM elements (fresh lookup each time)
+         * Check for existing wallet connection
          */
-        getElements: function() {
-            return {
-                container: $('#l2pay-payment-container'),
-                connectBtn: $('#l2pay-connect-btn'),
-                networkSelect: $('#l2pay-network'),
-                walletStatus: $('#l2pay-wallet-status'),
-                priceDisplay: $('#l2pay-price-display'),
-                cryptoAmountEl: $('#l2pay-crypto-amount'),
-                rateEl: $('#l2pay-rate'),
-                errorEl: $('#l2pay-error'),
-                txHashInput: $('#l2pay-tx-hash'),
-                cryptoPaidInput: $('#l2pay-eth-paid'),
-                walletInput: $('#l2pay-wallet-address'),
-            };
-        },
+        checkExistingConnection: function() {
+            const self = this;
 
-        /**
-         * Check if MetaMask is installed and get the correct provider
-         */
-        checkMetaMask: function() {
-            const elements = this.getElements();
-
-            let provider = null;
-
+            // Web3Modal handles cached provider reconnection in initWeb3Modal
+            // Here we just check for injected provider
             if (window.ethereum) {
+                let provider = null;
+
                 if (window.ethereum.providers && window.ethereum.providers.length) {
                     provider = window.ethereum.providers.find(p => p.isMetaMask);
                 } else if (window.ethereum.isMetaMask) {
                     provider = window.ethereum;
+                } else {
+                    provider = window.ethereum;
+                }
+
+                if (provider) {
+                    this.provider = provider;
+                    this.setupProviderListeners();
+
+                    // Check if already connected
+                    provider.request({ method: 'eth_accounts' }).then(function(accounts) {
+                        if (accounts && accounts.length > 0) {
+                            self.account = accounts[0];
+                            self.isConnected = true;
+                            self.updateUI();
+                            self.fetchConversion();
+                        }
+                    }).catch(function() {
+                        // Not connected, that's fine
+                    });
                 }
             }
+        },
 
-            if (!provider) {
-                this.showError(l2payData.i18n.installMetamask);
-                elements.connectBtn.prop('disabled', true);
-                return false;
+        /**
+         * Setup provider event listeners
+         */
+        setupProviderListeners: function() {
+            const self = this;
+
+            if (this.provider && !this.listenersSetup) {
+                if (this.provider.on) {
+                    this.provider.on('accountsChanged', function(accounts) {
+                        if (accounts.length === 0) {
+                            self.disconnect();
+                        } else {
+                            self.account = accounts[0];
+                            self.updateUI();
+                        }
+                    });
+
+                    this.provider.on('chainChanged', function(chainId) {
+                        self.syncNetworkSelector(chainId);
+                    });
+
+                    this.provider.on('disconnect', function() {
+                        self.disconnect();
+                    });
+                }
+
+                this.listenersSetup = true;
             }
+        },
 
-            this.provider = provider;
-
-            if (this.setupProviderListeners) {
-                this.setupProviderListeners();
-            }
-
-            return true;
+        /**
+         * Get DOM elements (fresh lookup each time)
+         */
+        getElements: function() {
+            return {
+                container: $('#lccp-payment-container'),
+                connectBtn: $('#lccp-connect-btn'),
+                networkSelect: $('#lccp-network'),
+                walletStatus: $('#lccp-wallet-status'),
+                priceDisplay: $('#lccp-price-display'),
+                cryptoAmountEl: $('#lccp-crypto-amount'),
+                rateEl: $('#lccp-rate'),
+                errorEl: $('#lccp-error'),
+                txHashInput: $('#lccp-tx-hash'),
+                cryptoPaidInput: $('#lccp-eth-paid'),
+                walletInput: $('#lccp-wallet-address'),
+            };
         },
 
         /**
          * Handle connect button click
          */
         handleConnectClick: async function() {
-
-            if (!this.checkMetaMask()) {
-                return;
-            }
-
             if (!this.isConnected) {
                 await this.connect();
             } else if ((this.paymentType === 'eth' && !this.ethAmount) ||
@@ -282,19 +413,172 @@
         },
 
         /**
-         * Connect to MetaMask
+         * Connect wallet - shows wallet selection modal
          */
         connect: async function() {
-            const elements = this.getElements();
-            const provider = this.provider;
+            this.hideError();
+
+            // Show wallet selection modal
+            this.showWalletModal();
+        },
+
+        /**
+         * Connect via MetaMask (injected provider)
+         */
+        connectMetaMask: async function() {
+            const self = this;
 
             try {
                 this.setButtonState('connecting');
+
+                if (!window.ethereum) {
+                    this.showError(lccpData.i18n.noWalletFound);
+                    this.setButtonState('connect');
+                    return;
+                }
+
+                let provider = null;
+                if (window.ethereum.providers && window.ethereum.providers.length) {
+                    provider = window.ethereum.providers.find(p => p.isMetaMask);
+                }
+                if (!provider) {
+                    provider = window.ethereum;
+                }
+
+                this.provider = provider;
+                this.setupProviderListeners();
 
                 const accounts = await provider.request({
                     method: 'eth_requestAccounts'
                 });
 
+                if (accounts.length === 0) {
+                    throw new Error('No accounts found');
+                }
+
+                this.account = accounts[0];
+                this.isConnected = true;
+                this.connectionType = 'metamask';
+
+                await this.onConnectionSuccess();
+
+            } catch (error) {
+                console.error('LCCP: MetaMask connection error:', error);
+                if (error.code === 4001) {
+                    // User rejected
+                    this.setButtonState('connect');
+                } else {
+                    this.showError(lccpData.i18n.transactionFailed);
+                    this.setButtonState('connect');
+                }
+            }
+        },
+
+        /**
+         * Connect via WalletConnect
+         */
+        connectWalletConnect: async function() {
+            const self = this;
+
+            try {
+                this.setButtonState('connecting');
+
+                // Try different possible export names
+                if (!this.wcProviderClass) {
+                    var wcModule = window['@walletconnect/ethereum-provider'];
+                    if (wcModule) {
+                        this.wcProviderClass = wcModule.EthereumProvider || wcModule.default || wcModule;
+                    }
+                }
+
+                if (!this.wcProviderClass) {
+                    this.showError('WalletConnect not available. Please use MetaMask.');
+                    this.setButtonState('connect');
+                    return;
+                }
+
+                const config = this.walletConfig || window.LCCPWalletConfig;
+                if (!config || !config.projectId) {
+                    this.showError('WalletConnect configuration missing.');
+                    this.setButtonState('connect');
+                    return;
+                }
+
+                // Initialize WalletConnect provider
+                const provider = await this.wcProviderClass.init({
+                    projectId: config.projectId,
+                    chains: [config.defaultChainId],
+                    optionalChains: config.chainIds,
+                    showQrModal: true,
+                    metadata: {
+                        name: 'Layer Crypto Checkout',
+                        description: 'Crypto Payments',
+                        url: window.location.origin,
+                        icons: []
+                    }
+                });
+
+                // Enable session (shows QR modal)
+                await provider.enable();
+
+                this.provider = provider;
+                this.wcProvider = provider;
+                this.setupProviderListeners();
+
+                const accounts = await provider.request({ method: 'eth_accounts' });
+
+                if (!accounts || accounts.length === 0) {
+                    throw new Error('No accounts found');
+                }
+
+                this.account = accounts[0];
+                this.isConnected = true;
+                this.connectionType = 'walletconnect';
+
+                await this.onConnectionSuccess();
+
+            } catch (error) {
+                console.error('LCCP: WalletConnect error:', error);
+                if (error.message && error.message.includes('User rejected')) {
+                    this.setButtonState('connect');
+                } else {
+                    this.showError('WalletConnect connection failed. Try MetaMask instead.');
+                    this.setButtonState('connect');
+                }
+            }
+        },
+
+        /**
+         * Legacy connect for direct provider (kept for compatibility)
+         */
+        connectDirect: async function() {
+            const self = this;
+            const elements = this.getElements();
+
+            try {
+                this.setButtonState('connecting');
+                this.hideError();
+
+                if (!window.ethereum) {
+                    this.showError(lccpData.i18n.noWalletFound);
+                    this.setButtonState('connect');
+                    return;
+                }
+
+                let provider = null;
+                if (window.ethereum.providers && window.ethereum.providers.length) {
+                    provider = window.ethereum.providers.find(p => p.isMetaMask);
+                }
+                if (!provider) {
+                    provider = window.ethereum;
+                }
+
+                this.provider = provider;
+                this.setupProviderListeners();
+
+                const accounts = await provider.request({
+                    method: 'eth_requestAccounts'
+                });
 
                 if (accounts.length === 0) {
                     throw new Error('No accounts found');
@@ -303,55 +587,75 @@
                 this.account = accounts[0];
                 this.isConnected = true;
 
-                await this.ensureCorrectNetwork();
-                this.updateUI();
-                elements.walletInput.val(this.account);
-                await this.fetchConversion();
-                this.setButtonState('ready');
+                await this.onConnectionSuccess();
 
             } catch (error) {
-                console.error('L2Pay: Connection error:', error);
-                this.showError(error.message);
+                console.error('LCCP: Connection error:', error);
+                if (error.code === 4001) {
+                    // User rejected the request
+                    this.showError('Connection cancelled by user.');
+                } else {
+                    this.showError(error.message || 'Connection failed');
+                }
                 this.setButtonState('connect');
             }
+        },
+
+        /**
+         * Handle successful connection
+         */
+        onConnectionSuccess: async function() {
+            const elements = this.getElements();
+
+            await this.ensureCorrectNetwork();
+            this.updateUI();
+            elements.walletInput.val(this.account);
+            await this.fetchConversion();
+            this.setButtonState('ready');
         },
 
         /**
          * Ensure we're on the correct network
          */
         ensureCorrectNetwork: async function() {
+            if (!this.provider) return;
+
             const provider = this.provider;
             const network = this.getSelectedNetwork();
             const targetChainId = network.chainId;
 
-            const currentChainId = await provider.request({ method: 'eth_chainId' });
+            try {
+                const currentChainId = await provider.request({ method: 'eth_chainId' });
 
-            if (currentChainId !== targetChainId) {
-                try {
-                    await provider.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: targetChainId }],
-                    });
-                } catch (switchError) {
-                    if (switchError.code === 4902) {
+                if (currentChainId !== targetChainId) {
+                    try {
                         await provider.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: targetChainId,
-                                chainName: network.name,
-                                rpcUrls: [network.rpcUrl],
-                                blockExplorerUrls: [network.explorer],
-                                nativeCurrency: {
-                                    name: network.symbol,
-                                    symbol: network.symbol,
-                                    decimals: 18
-                                }
-                            }],
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: targetChainId }],
                         });
-                    } else {
-                        throw switchError;
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await provider.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: targetChainId,
+                                    chainName: network.name,
+                                    rpcUrls: [network.rpcUrl],
+                                    blockExplorerUrls: [network.explorer],
+                                    nativeCurrency: {
+                                        name: network.symbol,
+                                        symbol: network.symbol,
+                                        decimals: 18
+                                    }
+                                }],
+                            });
+                        } else {
+                            throw switchError;
+                        }
                     }
                 }
+            } catch (error) {
+                console.warn('LCCP: Could not switch network:', error);
             }
         },
 
@@ -367,14 +671,14 @@
                 elements.walletStatus
                     .removeClass('disconnected')
                     .addClass('connected')
-                    .html('<span class="l2pay-status-icon">&#9989;</span>' +
-                          '<span class="l2pay-status-text">Connected: ' + shortAddress + ' (' + network.name + ')</span>');
+                    .html('<span class="lccp-status-icon">&#9989;</span>' +
+                          '<span class="lccp-status-text">Connected: ' + shortAddress + ' (' + network.name + ')</span>');
             } else {
                 elements.walletStatus
                     .removeClass('connected')
                     .addClass('disconnected')
-                    .html('<span class="l2pay-status-icon">&#128274;</span>' +
-                          '<span class="l2pay-status-text">' + l2payData.i18n.connectWallet + '</span>');
+                    .html('<span class="lccp-status-icon">&#128274;</span>' +
+                          '<span class="lccp-status-text">' + lccpData.i18n.connectWallet + '</span>');
             }
         },
 
@@ -386,10 +690,10 @@
 
             const btn = this.getElements().connectBtn;
             if (this.paymentType === 'usdc') {
-                btn.html('<span class="l2pay-btn-icon">&#128176;</span> ' + l2payData.i18n.payWithUsdc);
+                btn.html('<span class="lccp-btn-icon">&#128176;</span> ' + lccpData.i18n.payWithUsdc);
             } else {
                 const network = this.getSelectedNetwork();
-                btn.html('<span class="l2pay-btn-icon">&#128176;</span> Pay with ' + (network.symbol || 'ETH'));
+                btn.html('<span class="lccp-btn-icon">&#128176;</span> Pay with ' + (network.symbol || 'ETH'));
             }
         },
 
@@ -420,13 +724,13 @@
                 }
 
                 const response = await fetch(
-                    l2payData.restUrl + endpoint + '?amount=' + cartTotal + '&currency=' + l2payData.currency
+                    lccpData.restUrl + endpoint + '?amount=' + cartTotal + '&currency=' + lccpData.currency
                 );
 
                 const data = await response.json();
 
                 if (!data.success) {
-                    throw new Error(data.error || l2payData.i18n.conversionError);
+                    throw new Error(data.error || lccpData.i18n.conversionError);
                 }
 
                 if (this.paymentType === 'usdc') {
@@ -460,8 +764,8 @@
                 this.updateButtonText();
 
             } catch (error) {
-                console.error('L2Pay: Conversion error:', error);
-                this.showError(l2payData.i18n.conversionError);
+                console.error('LCCP: Conversion error:', error);
+                this.showError(lccpData.i18n.conversionError);
             }
         },
 
@@ -470,15 +774,48 @@
          */
         validateForm: function() {
             const $form = $('form.checkout');
+            const missingFields = [];
+            const shipToDifferent = $('#ship-to-different-address-checkbox').is(':checked');
 
             $form.find('.validate-required').each(function() {
                 const $field = $(this);
-                const $input = $field.find('input, select, textarea').not('[type="hidden"]');
 
-                if ($input.length && !$input.val()) {
-                    $field.addClass('woocommerce-invalid woocommerce-invalid-required-field');
-                } else {
+                // Skip hidden fields (e.g., state field hidden when country has no states)
+                // Also skip shipping fields when "ship to different address" is unchecked
+                if ($field.is(':hidden') || $field.closest('.shipping_address').length && !shipToDifferent) {
                     $field.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
+                    return;
+                }
+
+                // Check select elements first (including Select2-hidden selects)
+                const $select = $field.find('select');
+                if ($select.length) {
+                    if ($select.val()) {
+                        $field.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
+                        return;
+                    }
+                }
+
+                // Check visible inputs and textareas
+                const $input = $field.find('input, textarea').not('[type="hidden"]').filter(':visible');
+                if ($input.length) {
+                    if ($input.val() && $input.val().trim()) {
+                        $field.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
+                        return;
+                    }
+                }
+
+                // If we have no visible input/select, or the field has a value, skip
+                if (!$select.length && !$input.length) {
+                    $field.removeClass('woocommerce-invalid woocommerce-invalid-required-field');
+                    return;
+                }
+
+                // Field is empty - mark as invalid
+                $field.addClass('woocommerce-invalid woocommerce-invalid-required-field');
+                const label = $field.find('label').first().clone().children().remove().end().text().trim().replace(/\s*\*$/, '');
+                if (label) {
+                    missingFields.push(label);
                 }
             });
 
@@ -491,7 +828,11 @@
                         scrollTop: $firstError.offset().top - 100
                     }, 500);
                 }
-                this.showError('Please fill in all required fields before paying.');
+                if (missingFields.length > 0) {
+                    this.showError('Please fill in: ' + missingFields.join(', '));
+                } else {
+                    this.showError('Please fill in all required fields before paying.');
+                }
                 return false;
             }
 
@@ -518,9 +859,38 @@
                 return;
             }
 
+            if (!this.provider) {
+                this.showError('Wallet not connected. Please reconnect.');
+                return;
+            }
+
             try {
                 this.setButtonState('processing');
                 this.hideError();
+
+                // Ensure wallet is on the correct network before sending
+                await this.ensureCorrectNetwork();
+
+                // Verify the wallet actually switched
+                const currentChainId = await this.provider.request({ method: 'eth_chainId' });
+                const expectedChainId = this.getSelectedNetwork().chainId;
+                if (currentChainId !== expectedChainId) {
+                    // Wallet is on a different network - sync selector to actual network
+                    const networks = lccpData.networks;
+                    let actualNetworkKey = null;
+                    for (const key in networks) {
+                        if (networks[key].chainId === currentChainId) {
+                            actualNetworkKey = key;
+                            break;
+                        }
+                    }
+                    if (actualNetworkKey) {
+                        $('#lccp-network').val(actualNetworkKey);
+                        this.selectedNetwork = networks[actualNetworkKey];
+                    } else {
+                        throw new Error('Your wallet is on an unsupported network. Please switch to a supported network.');
+                    }
+                }
 
                 // Refresh conversion with latest price
                 await this.fetchConversion();
@@ -559,13 +929,17 @@
                 elements.txHashInput.val(txHash);
                 elements.cryptoPaidInput.val(this.paymentType === 'usdc' ? this.usdcAmount : this.ethAmount);
 
-                // Also store network and payment type
-                $('#l2pay-payment-type').val(this.paymentType);
+                // Also store payment type
+                $('#lccp-payment-type').val(this.paymentType);
 
-                // Store the selected network
-                const network = this.getSelectedNetwork();
-                if (network && network.key) {
-                    $('#l2pay-network').val(network.key);
+                // Read the ACTUAL chain from the wallet after TX to ensure backend verifies on the correct network
+                const actualChainId = await this.provider.request({ method: 'eth_chainId' });
+                const networks = lccpData.networks;
+                for (const key in networks) {
+                    if (networks[key].chainId === actualChainId) {
+                        $('#lccp-network').val(key);
+                        break;
+                    }
                 }
 
                 this.setButtonState('complete');
@@ -574,7 +948,7 @@
                 setTimeout(function() {
                     // Verify values are set before submitting
                     if (!elements.txHashInput.val()) {
-                        console.error('L2Pay: TX hash not set before submit!');
+                        console.error('LCCP: TX hash not set before submit!');
                         self.showError('Payment completed but form submission failed. TX: ' + txHash);
                         return;
                     }
@@ -591,14 +965,14 @@
                         // Trigger WooCommerce checkout
                         $form.submit();
                     } else {
-                        console.error('L2Pay: Checkout form not found');
+                        console.error('LCCP: Checkout form not found');
                         self.showError('Checkout form not found. Please refresh and try again.');
                     }
                 }, 500);
 
             } catch (error) {
-                console.error('L2Pay: Payment error:', error);
-                this.showError(error.message || l2payData.i18n.transactionFailed);
+                console.error('LCCP: Payment error:', error);
+                this.showError(error.message || lccpData.i18n.transactionFailed);
                 this.setButtonState('ready');
             }
         },
@@ -609,10 +983,10 @@
         processUsdcPayment: async function(orderId) {
             const provider = this.provider;
             const network = this.getSelectedNetwork();
-            const merchantAddress = l2payData.merchantAddress;
+            const merchantAddress = lccpData.merchantAddress;
 
             if (!merchantAddress || !merchantAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-                throw new Error(l2payData.i18n.merchantNotConfigured);
+                throw new Error(lccpData.i18n.merchantNotConfigured);
             }
 
             if (!network.usdcAddress) {
@@ -628,7 +1002,7 @@
             const balance = await this.getUsdcBalance(usdcAddress);
 
             if (BigInt(balance) < BigInt(amount)) {
-                throw new Error(l2payData.i18n.insufficientUsdc);
+                throw new Error(lccpData.i18n.insufficientUsdc);
             }
 
             // Check current allowance
@@ -739,7 +1113,7 @@
         sendTokenTransaction: async function(orderId, tokenAddress, amount) {
             const provider = this.provider;
             const network = this.getSelectedNetwork();
-            const merchantAddress = l2payData.merchantAddress;
+            const merchantAddress = lccpData.merchantAddress;
 
             // payWithToken(uint256,address,address,uint256) selector
             // keccak256("payWithToken(uint256,address,address,uint256)") = 0xd6bcaa76
@@ -782,10 +1156,10 @@
         sendTransaction: async function(orderId) {
             const provider = this.provider;
             const network = this.getSelectedNetwork();
-            const merchantAddress = l2payData.merchantAddress;
+            const merchantAddress = lccpData.merchantAddress;
 
             if (!merchantAddress || !merchantAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-                throw new Error(l2payData.i18n.merchantNotConfigured);
+                throw new Error(lccpData.i18n.merchantNotConfigured);
             }
 
             // pay(uint256,address) function selector: 0x31cbf5e3
@@ -895,9 +1269,9 @@
                 return value || 0;
             }
 
-            // Fallback: try to get from l2payData if available
-            if (typeof l2payData !== 'undefined' && l2payData.cartTotal) {
-                return parseFloat(l2payData.cartTotal) || 0;
+            // Fallback: try to get from lccpData if available
+            if (typeof lccpData !== 'undefined' && lccpData.cartTotal) {
+                return parseFloat(lccpData.cartTotal) || 0;
             }
 
             return 0;
@@ -915,44 +1289,44 @@
                 case 'connect':
                     btn.prop('disabled', false)
                        .removeClass('processing complete')
-                       .html('<span class="l2pay-btn-icon">&#129418;</span> ' + l2payData.i18n.connectWallet);
+                       .html('<span class="lccp-btn-icon">&#129418;</span> ' + lccpData.i18n.connectWallet);
                     break;
 
                 case 'connecting':
                     btn.prop('disabled', true)
                        .addClass('processing')
-                       .html('<span class="l2pay-spinner"></span> Connecting...');
+                       .html('<span class="lccp-spinner"></span> ' + (lccpData.i18n.connecting || 'Connecting...'));
                     break;
 
                 case 'ready':
                     btn.prop('disabled', false)
                        .removeClass('processing')
-                       .html('<span class="l2pay-btn-icon">&#128176;</span> Pay with ' + symbol);
+                       .html('<span class="lccp-btn-icon">&#128176;</span> Pay with ' + symbol);
                     break;
 
                 case 'processing':
                     btn.prop('disabled', true)
                        .addClass('processing')
-                       .html('<span class="l2pay-spinner"></span> ' + l2payData.i18n.processing);
+                       .html('<span class="lccp-spinner"></span> ' + lccpData.i18n.processing);
                     break;
 
                 case 'approving':
                     btn.prop('disabled', true)
                        .addClass('processing')
-                       .html('<span class="l2pay-spinner"></span> ' + l2payData.i18n.approving);
+                       .html('<span class="lccp-spinner"></span> ' + lccpData.i18n.approving);
                     break;
 
                 case 'confirming':
                     btn.prop('disabled', true)
                        .addClass('processing')
-                       .html('<span class="l2pay-spinner"></span> ' + l2payData.i18n.waitingConfirmation);
+                       .html('<span class="lccp-spinner"></span> ' + lccpData.i18n.waitingConfirmation);
                     break;
 
                 case 'complete':
                     btn.prop('disabled', true)
                        .removeClass('processing')
                        .addClass('complete')
-                       .html('<span class="l2pay-btn-icon">&#9989;</span> ' + l2payData.i18n.paymentComplete);
+                       .html('<span class="lccp-btn-icon">&#9989;</span> ' + lccpData.i18n.paymentComplete);
                     break;
             }
         },
@@ -981,6 +1355,20 @@
             this.weiAmount = null;
             this.usdcAmount = null;
             this.usdcSmallestUnit = null;
+
+            // Disconnect WalletConnect provider if applicable
+            if (this.wcProvider && this.wcProvider.disconnect) {
+                try {
+                    this.wcProvider.disconnect();
+                } catch (e) {
+                    // Ignore disconnect errors
+                }
+            }
+
+            this.connectionType = null;
+            this.wcProvider = null;
+            this.provider = null;
+
             this.updateUI();
             this.getElements().priceDisplay.hide();
             this.setButtonState('connect');
@@ -1003,10 +1391,10 @@
 
     // Initialize when document is ready
     $(document).ready(function() {
-        L2Pay.init();
+        LCCP.init();
     });
 
     // Expose globally for debugging
-    window.L2Pay = L2Pay;
+    window.LCCP = LCCP;
 
 })(jQuery);
