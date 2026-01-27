@@ -1,17 +1,20 @@
+# Italian translation for Layer Crypto Checkout
+# Copyright (C) 2025 Layer Crypto Checkout
+# This file is distributed under the same license as the Layer Crypto Checkout package.
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: Layer Crypto Checkout 1.5.0\n"
-"Report-Msgid-Bugs-To: support@layercryptocheckout.com\n"
-"POT-Creation-Date: 2026-01-27 00:00+0000\n"
-"PO-Revision-Date: 2026-01-27 00:00+0000\n"
-"Last-Translator: Layer Crypto Checkout\n"
-"Language-Team: Layer Crypto Checkout\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-01-01 00:00+0000\n"
+"PO-Revision-Date: 2025-01-27 00:00+0000\n"
+"Last-Translator: \n"
+"Language-Team: Italian\n"
 "Language: it_IT\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Layer Crypto Checkout\n"
 "X-Domain: layer-crypto-checkout\n"
 
 msgid "Layer Crypto Checkout"
@@ -20,53 +23,20 @@ msgstr "Layer Crypto Checkout"
 msgid "Accept ETH and USDC payments via MetaMask or WalletConnect on Layer 2 networks."
 msgstr "Accetta pagamenti in ETH e USDC tramite MetaMask o WalletConnect su reti Layer 2."
 
-msgid "Pay with Crypto"
-msgstr "Paga con Crypto"
+msgid "Layer Crypto Checkout requires WooCommerce to be installed and active."
+msgstr "Layer Crypto Checkout richiede che WooCommerce sia installato e attivo."
 
-msgid "Pay with ETH or USDC using MetaMask or WalletConnect"
-msgstr "Paga con ETH o USDC usando MetaMask o WalletConnect"
-
-msgid "Enable/Disable"
-msgstr "Abilita/Disabilita"
-
-msgid "Enable Layer Crypto Checkout"
-msgstr "Abilita Layer Crypto Checkout"
-
-msgid "Title"
-msgstr "Titolo"
-
-msgid "Payment method title shown at checkout"
-msgstr "Titolo del metodo di pagamento mostrato al checkout"
-
-msgid "Description"
-msgstr "Descrizione"
-
-msgid "Payment method description shown at checkout"
-msgstr "Descrizione del metodo di pagamento mostrata al checkout"
-
-msgid "Merchant Wallet"
-msgstr "Wallet del Merchant"
-
-msgid "Your Ethereum wallet address to receive payments"
-msgstr "Il tuo indirizzo wallet Ethereum per ricevere i pagamenti"
-
-msgid "Test Mode"
-msgstr "Modalità Test"
-
-msgid "Use testnets for testing"
-msgstr "Usa le testnet per i test"
-
-msgid "Price Margin (%)"
-msgstr "Margine Prezzo (%)"
-
-msgid "Add margin to account for price volatility"
-msgstr "Aggiungi un margine per la volatilità del prezzo"
+msgid "Settings"
+msgstr "Impostazioni"
 
 msgid "Connect Wallet"
 msgstr "Connetti Wallet"
 
-msgid "Connecting..."
-msgstr "Connessione..."
+msgid "Pay with ETH"
+msgstr "Paga con ETH"
+
+msgid "Pay with USDC"
+msgstr "Paga con USDC"
 
 msgid "Processing..."
 msgstr "Elaborazione..."
@@ -77,23 +47,287 @@ msgstr "Approvazione USDC..."
 msgid "Waiting for confirmation..."
 msgstr "In attesa di conferma..."
 
-msgid "Payment Complete!"
-msgstr "Pagamento Completato!"
+msgid "Payment complete!"
+msgstr "Pagamento completato!"
 
-msgid "Pay with USDC"
-msgstr "Paga con USDC"
+msgid "No wallet found. Please install MetaMask or use WalletConnect."
+msgstr "Nessun wallet trovato. Installa MetaMask o usa WalletConnect."
 
-msgid "No wallet found"
-msgstr "Nessun wallet trovato"
+msgid "Please switch network"
+msgstr "Cambia rete"
 
-msgid "Transaction failed"
-msgstr "Transazione fallita"
+msgid "Transaction failed. Please try again."
+msgstr "Transazione fallita. Riprova."
 
-msgid "Conversion error"
-msgstr "Errore di conversione"
+msgid "Error getting price. Please try again."
+msgstr "Errore nel recupero del prezzo. Riprova."
+
+msgid "Select Network"
+msgstr "Seleziona rete"
+
+msgid "Payment Method"
+msgstr "Metodo di pagamento"
+
+msgid "Merchant wallet not configured. Please contact store owner."
+msgstr "Wallet del venditore non configurato. Contatta il proprietario del negozio."
 
 msgid "Insufficient USDC balance"
 msgstr "Saldo USDC insufficiente"
 
-msgid "Merchant wallet not configured"
-msgstr "Wallet del merchant non configurato"
+msgid "USDC approval failed. Please try again."
+msgstr "Approvazione USDC fallita. Riprova."
+
+msgid "Connecting..."
+msgstr "Connessione..."
+
+msgid "Wallet disconnected"
+msgstr "Wallet disconnesso"
+
+msgid "Layer Crypto Checkout payment verified on-chain (%1$s). Transaction: %2$s"
+msgstr "Pagamento Layer Crypto Checkout verificato on-chain (%1$s). Transazione: %2$s"
+
+msgid "Layer Crypto Checkout (ETH & USDC)"
+msgstr "Layer Crypto Checkout (ETH e USDC)"
+
+msgid "Accept ETH and USDC payments via MetaMask or WalletConnect. Payments are processed through a smart contract on multiple blockchains."
+msgstr "Accetta pagamenti in ETH e USDC tramite MetaMask o WalletConnect. I pagamenti vengono elaborati tramite smart contract su diverse blockchain."
+
+msgid "Enable/Disable"
+msgstr "Abilita/Disabilita"
+
+msgid "Enable Layer Crypto Checkout Gateway"
+msgstr "Abilita il gateway Layer Crypto Checkout"
+
+msgid "Title"
+msgstr "Titolo"
+
+msgid "This controls the title which the user sees during checkout."
+msgstr "Questo determina il titolo che l'utente vede durante il checkout."
+
+msgid "Pay with Crypto"
+msgstr "Paga con Crypto"
+
+msgid "Description"
+msgstr "Descrizione"
+
+msgid "This controls the description which the user sees during checkout."
+msgstr "Questo determina la descrizione che l'utente vede durante il checkout."
+
+msgid "Pay securely with ETH or USDC via MetaMask or WalletConnect."
+msgstr "Paga in sicurezza con ETH o USDC tramite MetaMask o WalletConnect."
+
+msgid "Merchant Settings"
+msgstr "Impostazioni venditore"
+
+msgid "Configure your merchant wallet address."
+msgstr "Configura l'indirizzo del tuo wallet venditore."
+
+msgid "Wallet Address"
+msgstr "Indirizzo Wallet"
+
+msgid "Your Ethereum wallet address where you will receive payments."
+msgstr "Il tuo indirizzo wallet Ethereum dove riceverai i pagamenti."
+
+msgid "Advanced Settings"
+msgstr "Impostazioni avanzate"
+
+msgid "Additional configuration options."
+msgstr "Opzioni di configurazione aggiuntive."
+
+msgid "Price Margin (%)"
+msgstr "Margine sul prezzo (%)"
+
+msgid "Add a margin to the ETH price to account for price volatility during transaction confirmation. Default: 2%"
+msgstr "Aggiungi un margine al prezzo ETH per compensare la volatilità del prezzo durante la conferma della transazione. Predefinito: 2%"
+
+msgid "Price Cache Duration (seconds)"
+msgstr "Durata cache del prezzo (secondi)"
+
+msgid "How long to cache the ETH price. Lower values = more accurate but more API calls. Default: 60 seconds"
+msgstr "Durata della cache del prezzo ETH. Valori più bassi = più preciso ma più chiamate API. Predefinito: 60 secondi"
+
+msgid "Debug Mode"
+msgstr "Modalità debug"
+
+msgid "Enable debug logging"
+msgstr "Abilita il log di debug"
+
+msgid "Log payment events and errors for debugging."
+msgstr "Registra eventi di pagamento ed errori per il debug."
+
+msgid "Network Mode"
+msgstr "Modalità rete"
+
+msgid "Choose between test networks (for development) or live networks (for real payments)."
+msgstr "Scegli tra reti di test (per lo sviluppo) o reti live (per pagamenti reali)."
+
+msgid "Mode"
+msgstr "Modalità"
+
+msgid "Test mode uses testnet networks (no real money). Live mode uses mainnet networks (real payments)."
+msgstr "La modalità test usa reti testnet (nessun denaro reale). La modalità live usa reti mainnet (pagamenti reali)."
+
+msgid "Test Mode (Testnets)"
+msgstr "Modalità test (Testnet)"
+
+msgid "Live Mode (Mainnets)"
+msgstr "Modalità live (Mainnet)"
+
+msgid "Live Mode"
+msgstr "Modalità live"
+
+msgid "Test Mode"
+msgstr "Modalità test"
+
+msgid "LIVE MODE - Real Payments Active"
+msgstr "MODALITA' LIVE - Pagamenti reali attivi"
+
+msgid "You are accepting real cryptocurrency payments on mainnet networks. All transactions involve real money."
+msgstr "Stai accettando pagamenti reali in criptovaluta su reti mainnet. Tutte le transazioni coinvolgono denaro reale."
+
+msgid "TEST MODE - Using Testnets"
+msgstr "MODALITA' TEST - Utilizzo Testnet"
+
+msgid "You are using testnet networks. No real money is involved. Switch to Live Mode when ready to accept real payments."
+msgstr "Stai usando reti testnet. Non è coinvolto denaro reale. Passa alla modalità live quando sei pronto ad accettare pagamenti reali."
+
+msgid "Setup"
+msgstr "Configurazione"
+
+msgid "Enter your wallet address below to receive payments"
+msgstr "Inserisci il tuo indirizzo wallet qui sotto per ricevere i pagamenti"
+
+msgid "Customers will choose their preferred network at checkout"
+msgstr "I clienti sceglieranno la loro rete preferita al checkout"
+
+msgid "A 1% platform fee is applied to each transaction"
+msgstr "Una commissione dell'1% viene applicata ad ogni transazione"
+
+msgid "Security & Reliability"
+msgstr "Sicurezza e affidabilità"
+
+msgid "Non-Custodial"
+msgstr "Non-Custodial"
+
+msgid "Payments go directly to your wallet. We never hold your funds."
+msgstr "I pagamenti vanno direttamente al tuo wallet. Non custodiamo mai i tuoi fondi."
+
+msgid "Immutable Smart Contract"
+msgstr "Smart Contract immutabile"
+
+msgid "Contract code cannot be changed after deployment. Your funds are safe."
+msgstr "Il codice del contratto non può essere modificato dopo il deployment. I tuoi fondi sono al sicuro."
+
+msgid "Reentrancy Protection"
+msgstr "Protezione da reentrancy"
+
+msgid "Built-in guard against reentrancy attacks (OpenZeppelin standard)."
+msgstr "Protezione integrata contro attacchi di reentrancy (standard OpenZeppelin)."
+
+msgid "On-Chain Verification"
+msgstr "Verifica on-chain"
+
+msgid "Every payment is verified on blockchain before order completion."
+msgstr "Ogni pagamento viene verificato sulla blockchain prima del completamento dell'ordine."
+
+msgid "Replay Attack Protection"
+msgstr "Protezione da replay attack"
+
+msgid "Each payment is unique and cannot be reused across chains."
+msgstr "Ogni pagamento è unico e non può essere riutilizzato su altre chain."
+
+msgid "Open Source & Verified"
+msgstr "Open source e verificato"
+
+msgid "Contract source code is publicly verified on all block explorers."
+msgstr "Il codice sorgente del contratto è verificato pubblicamente su tutti i block explorer."
+
+msgid "Contract:"
+msgstr "Contratto:"
+
+msgid "Same address on all supported networks"
+msgstr "Stesso indirizzo su tutte le reti supportate"
+
+msgid "Available Mainnet Networks"
+msgstr "Reti Mainnet disponibili"
+
+msgid "Available Testnet Networks"
+msgstr "Reti Testnet disponibili"
+
+msgid "No mainnet contracts deployed yet. Deploy contracts to mainnet networks first."
+msgstr "Nessun contratto mainnet ancora distribuito. Distribuisci prima i contratti sulle reti mainnet."
+
+msgid "No testnet contracts deployed yet."
+msgstr "Nessun contratto testnet ancora distribuito."
+
+msgid "Test Mode - No real money"
+msgstr "Modalità test - Nessun denaro reale"
+
+msgid "Pay with"
+msgstr "Paga con"
+
+msgid "Network"
+msgstr "Rete"
+
+msgid "Wallet not connected"
+msgstr "Wallet non connesso"
+
+msgid "Order Total:"
+msgstr "Totale ordine:"
+
+msgid "Amount:"
+msgstr "Importo:"
+
+msgid "Rate:"
+msgstr "Tasso:"
+
+msgid "Please complete the crypto payment before placing the order."
+msgstr "Completa il pagamento in criptovaluta prima di effettuare l'ordine."
+
+msgid "Invalid transaction hash. Please try again."
+msgstr "Hash della transazione non valido. Riprova."
+
+msgid "Layer Crypto Checkout: On-chain verification failed: %s"
+msgstr "Layer Crypto Checkout: verifica on-chain fallita: %s"
+
+msgid "Payment verification failed: "
+msgstr "Verifica del pagamento fallita: "
+
+msgid "Layer Crypto Checkout payment verified on-chain (%1$s). Amount: %2$s %3$s. TX: %4$s"
+msgstr "Pagamento Layer Crypto Checkout verificato on-chain (%1$s). Importo: %2$s %3$s. TX: %4$s"
+
+msgid "Invalid network configuration"
+msgstr "Configurazione di rete non valida"
+
+msgid "Contract not configured for this network"
+msgstr "Contratto non configurato per questa rete"
+
+msgid "Transaction not yet confirmed. Please wait a moment and try again."
+msgstr "Transazione non ancora confermata. Attendi un momento e riprova."
+
+msgid "Transaction failed on blockchain"
+msgstr "Transazione fallita sulla blockchain"
+
+msgid "Transaction sent to wrong contract address"
+msgstr "Transazione inviata all'indirizzo del contratto sbagliato"
+
+msgid "No valid payment event found in transaction"
+msgstr "Nessun evento di pagamento valido trovato nella transazione"
+
+msgid "Payment sent to wrong merchant address"
+msgstr "Pagamento inviato all'indirizzo del venditore sbagliato"
+
+msgid "Payment Details"
+msgstr "Dettagli pagamento"
+
+msgid "Transaction Hash:"
+msgstr "Hash della transazione:"
+
+msgid "Network:"
+msgstr "Rete:"
+
+msgid "Transaction:"
+msgstr "Transazione:"
+
+msgid "Refund requested for %s. Note: Crypto refunds must be processed manually by sending ETH back to the customer wallet."
+msgstr "Rimborso richiesto per %s. Nota: i rimborsi crypto devono essere elaborati manualmente inviando ETH al wallet del cliente."
