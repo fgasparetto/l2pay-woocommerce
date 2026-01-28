@@ -21,10 +21,23 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('LCCP_VERSION', '1.5.0');
+define('LCCP_VERSION', '1.6.0');
 define('LCCP_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('LCCP_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('LCCP_PLUGIN_BASENAME', plugin_basename(__FILE__));
+
+/**
+ * Plugin activation hook
+ * Creates necessary database tables for security features
+ */
+function lccp_activate() {
+    // Load the TX Hash class
+    require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-txhash.php';
+
+    // Create the TX hash idempotency table
+    LCCP_TxHash::create_table();
+}
+register_activation_hook(__FILE__, 'lccp_activate');
 
 /**
  * Supported networks configuration
@@ -250,6 +263,9 @@ function lccp_init() {
     if (!lccp_check_woocommerce()) {
         return;
     }
+
+    // Load the TX Hash idempotency class
+    require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-txhash.php';
 
     // Load the gateway class
     require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-gateway.php';
@@ -624,6 +640,21 @@ function lccp_verify_payment() {
         return;
     }
 
+    // SECURITY: Check TX hash idempotency - prevent replay attacks
+    if (class_exists('LCCP_TxHash')) {
+        $existing = LCCP_TxHash::is_used($tx_hash);
+        if ($existing) {
+            wp_send_json_error(array(
+                'message' => sprintf(
+                    /* translators: %d: existing order ID */
+                    __('This transaction has already been used for order #%d', 'layer-crypto-checkout'),
+                    $existing['order_id']
+                )
+            ));
+            return;
+        }
+    }
+
     // SECURITY: Perform on-chain verification before completing
     $gateway = new LCCP_Gateway();
     $network = lccp_get_network($network_key);
@@ -708,6 +739,22 @@ function lccp_verify_payment() {
 
     if (!$valid_payment) {
         wp_send_json_error(array('message' => 'No valid payment to merchant found in transaction'));
+    }
+
+    // SECURITY: Record TX hash to prevent reuse (race condition handled)
+    if (class_exists('LCCP_TxHash')) {
+        $record_result = LCCP_TxHash::record($tx_hash, $order_id, $network_key);
+        if ($record_result === 'duplicate') {
+            $existing = LCCP_TxHash::is_used($tx_hash);
+            wp_send_json_error(array(
+                'message' => sprintf(
+                    /* translators: %s: existing order ID */
+                    __('This transaction has already been used for order #%s', 'layer-crypto-checkout'),
+                    $existing ? $existing['order_id'] : 'unknown'
+                )
+            ));
+            return;
+        }
     }
 
     // All verifications passed - update order

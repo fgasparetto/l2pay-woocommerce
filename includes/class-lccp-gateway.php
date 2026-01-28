@@ -357,6 +357,7 @@ class LCCP_Gateway extends WC_Payment_Gateway {
             <input type="hidden" id="lccp-eth-paid" name="lccp_eth_amount" value="">
             <input type="hidden" id="lccp-wallet-address" name="lccp_wallet_address" value="">
             <input type="hidden" id="lccp-payment-type" name="lccp_payment_type_hidden" value="eth">
+            <input type="hidden" id="lccp-expected-amount" name="lccp_expected_amount" value="">
         </div>
         <?php
     }
@@ -400,6 +401,8 @@ class LCCP_Gateway extends WC_Payment_Gateway {
         $network_key = isset($_POST['lccp_network']) ? sanitize_text_field(wp_unslash($_POST['lccp_network'])) : 'sepolia';
         // phpcs:ignore WordPress.Security.NonceVerification.Missing
         $payment_type = isset($_POST['lccp_payment_type']) ? sanitize_text_field(wp_unslash($_POST['lccp_payment_type'])) : 'eth';
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing
+        $expected_amount = isset($_POST['lccp_expected_amount']) ? sanitize_text_field(wp_unslash($_POST['lccp_expected_amount'])) : '';
 
         // Get network info
         $network = lccp_get_network($network_key);
@@ -417,10 +420,13 @@ class LCCP_Gateway extends WC_Payment_Gateway {
         $order->update_meta_data('_lccp_payer_address', $wallet_address);
         $order->update_meta_data('_lccp_network', $network_key);
         $order->update_meta_data('_lccp_contract', $network ? $network['contract'] : '');
+        if ($expected_amount) {
+            $order->update_meta_data('_lccp_expected_amount', $expected_amount);
+        }
         $order->save();
 
-        // Perform on-chain verification
-        $verification_result = $this->verify_transaction_onchain($tx_hash, $network_key, $order);
+        // Perform on-chain verification with expected amount for underpayment check
+        $verification_result = $this->verify_transaction_onchain($tx_hash, $network_key, $order, $expected_amount);
 
         if (is_wp_error($verification_result)) {
             // Verification failed - mark order as failed
@@ -493,17 +499,52 @@ class LCCP_Gateway extends WC_Payment_Gateway {
     }
 
     /**
-     * Verify transaction on-chain
+     * Verify transaction on-chain with full security checks
+     *
+     * Security checks performed:
+     * 1. TX Hash Idempotency - Prevents reuse of same tx_hash for multiple orders
+     * 2. Transaction Status - Verifies tx succeeded on blockchain
+     * 3. Contract Address - Verifies tx was sent to our contract
+     * 4. Merchant Address - Verifies payment went to correct merchant
+     * 5. Amount Verification - Verifies paid amount >= 99% of expected
      *
      * @param string $tx_hash Transaction hash
      * @param string $network_key Network identifier
      * @param WC_Order $order Order object
+     * @param string|null $expected_amount Expected amount in smallest units (optional)
      * @return array|WP_Error Verification result or error
      */
-    private function verify_transaction_onchain($tx_hash, $network_key, $order) {
-        // Get RPC URL for the network
-        $rpc_url = $this->get_rpc_url($network_key);
-        if (!$rpc_url) {
+    private function verify_transaction_onchain($tx_hash, $network_key, $order, $expected_amount = null) {
+        $order_id = $order->get_id();
+
+        // ============================================================
+        // SECURITY CHECK 1: TX Hash Idempotency
+        // Prevents replay attacks where same tx_hash is used for multiple orders
+        // ============================================================
+        if (class_exists('LCCP_TxHash')) {
+            $existing = LCCP_TxHash::is_used($tx_hash);
+            if ($existing) {
+                $this->log_security('DUPLICATE_TX', array(
+                    'tx_hash' => $tx_hash,
+                    'existing_order_id' => $existing['order_id'],
+                    'attempted_order_id' => $order_id,
+                    'network' => $network_key,
+                ), $order_id);
+
+                return new WP_Error(
+                    'duplicate_tx',
+                    sprintf(
+                        /* translators: %d: existing order ID */
+                        __('This transaction has already been used for order #%d', 'layer-crypto-checkout'),
+                        $existing['order_id']
+                    )
+                );
+            }
+        }
+
+        // Get RPC URLs for the network (with fallback)
+        $rpc_urls = $this->get_rpc_urls($network_key);
+        if (empty($rpc_urls)) {
             return new WP_Error('invalid_network', __('Invalid network configuration', 'layer-crypto-checkout'));
         }
 
@@ -516,46 +557,53 @@ class LCCP_Gateway extends WC_Payment_Gateway {
             return new WP_Error('no_contract', __('Contract not configured for this network', 'layer-crypto-checkout'));
         }
 
-        // Retry logic: transaction might not be propagated to all nodes immediately
-        // Testnets and L2s can take 10-30 seconds for confirmation
-        $max_retries = 10;
+        // ============================================================
+        // Polling with Fallback RPC URLs
+        // Tries each RPC URL before sleeping on each cycle
+        // ============================================================
+        $max_cycles = 10;
         $retry_delay = 3; // seconds
         $receipt = null;
 
-        for ($attempt = 1; $attempt <= $max_retries; $attempt++) {
-            // Call eth_getTransactionReceipt
-            $receipt = $this->rpc_call($rpc_url, 'eth_getTransactionReceipt', array($tx_hash));
+        for ($cycle = 0; $cycle < $max_cycles; $cycle++) {
+            foreach ($rpc_urls as $rpc_url) {
+                $receipt = $this->rpc_call($rpc_url, 'eth_getTransactionReceipt', array($tx_hash));
 
-            if (is_wp_error($receipt)) {
-                if ($attempt < $max_retries) {
-                    sleep($retry_delay);
-                    continue;
+                if (!is_wp_error($receipt) && $receipt !== null) {
+                    break 2; // Found valid receipt, exit both loops
                 }
-                return $receipt;
             }
 
-            if ($receipt !== null) {
-                break; // Receipt found
-            }
-
-            if ($attempt < $max_retries) {
+            // Sleep before next cycle (unless this is the last cycle)
+            if ($cycle < $max_cycles - 1) {
                 sleep($retry_delay);
             }
         }
 
-        if ($receipt === null) {
+        if ($receipt === null || is_wp_error($receipt)) {
             return new WP_Error('tx_pending', __('Transaction not yet confirmed. Please wait a moment and try again.', 'layer-crypto-checkout'));
         }
 
-        // Check transaction status
+        // ============================================================
+        // SECURITY CHECK 2: Transaction Status
+        // ============================================================
         $status = isset($receipt['status']) ? $receipt['status'] : '0x0';
         if ($this->hex_to_dec($status) !== '1') {
             return new WP_Error('tx_failed', __('Transaction failed on blockchain', 'layer-crypto-checkout'));
         }
 
-        // Verify transaction was sent to our contract
+        // ============================================================
+        // SECURITY CHECK 3: Contract Address
+        // ============================================================
         $tx_to = strtolower($receipt['to'] ?? '');
         if ($tx_to !== $contract_address) {
+            $this->log_security('WRONG_CONTRACT', array(
+                'tx_hash' => $tx_hash,
+                'expected_contract' => $contract_address,
+                'actual_contract' => $tx_to,
+                'network' => $network_key,
+            ), $order_id);
+
             return new WP_Error('wrong_contract', __('Transaction sent to wrong contract address', 'layer-crypto-checkout'));
         }
 
@@ -566,9 +614,78 @@ class LCCP_Gateway extends WC_Payment_Gateway {
             return new WP_Error('no_event', __('No valid payment event found in transaction', 'layer-crypto-checkout'));
         }
 
-        // Verify merchant address
+        // ============================================================
+        // SECURITY CHECK 4: Merchant Address
+        // ============================================================
         if (strtolower($payment_data['merchant']) !== $merchant_address) {
+            $this->log_security('WRONG_MERCHANT', array(
+                'tx_hash' => $tx_hash,
+                'expected_merchant' => $merchant_address,
+                'actual_merchant' => $payment_data['merchant'],
+                'network' => $network_key,
+            ), $order_id);
+
             return new WP_Error('wrong_merchant', __('Payment sent to wrong merchant address', 'layer-crypto-checkout'));
+        }
+
+        // ============================================================
+        // SECURITY CHECK 5: Amount Verification
+        // Accepts payment if >= 99% of expected amount (1% tolerance for rounding)
+        // ============================================================
+        if ($expected_amount && function_exists('bcmul')) {
+            $received_amount = $payment_data['amount'];
+            // Calculate minimum acceptable (99% of expected)
+            $min_acceptable = bcmul($expected_amount, '0.99', 0);
+
+            if (bccomp($received_amount, $min_acceptable) < 0) {
+                $this->log_security('UNDERPAYMENT', array(
+                    'tx_hash' => $tx_hash,
+                    'expected_amount' => $expected_amount,
+                    'received_amount' => $received_amount,
+                    'min_acceptable' => $min_acceptable,
+                    'payment_type' => $payment_data['type'],
+                    'network' => $network_key,
+                ), $order_id);
+
+                return new WP_Error(
+                    'underpayment',
+                    __('Payment amount is insufficient. Expected amount not received.', 'layer-crypto-checkout')
+                );
+            }
+        }
+
+        // ============================================================
+        // All checks passed - Record TX hash to prevent reuse
+        // ============================================================
+        if (class_exists('LCCP_TxHash')) {
+            $record_result = LCCP_TxHash::record($tx_hash, $order_id, $network_key);
+
+            if ($record_result === 'duplicate') {
+                // Race condition - another request recorded this TX just now
+                $existing = LCCP_TxHash::is_used($tx_hash);
+                $existing_order_id = $existing ? $existing['order_id'] : 'unknown';
+
+                $this->log_security('RACE_CONDITION', array(
+                    'tx_hash' => $tx_hash,
+                    'existing_order_id' => $existing_order_id,
+                    'attempted_order_id' => $order_id,
+                    'network' => $network_key,
+                ), $order_id);
+
+                return new WP_Error(
+                    'duplicate_tx',
+                    sprintf(
+                        /* translators: %s: existing order ID */
+                        __('This transaction has already been used for order #%s', 'layer-crypto-checkout'),
+                        $existing_order_id
+                    )
+                );
+            }
+
+            if ($record_result === false) {
+                // Database error - log but don't fail the payment
+                $this->log('Warning: Failed to record TX hash in idempotency table: ' . $tx_hash);
+            }
         }
 
         // All checks passed
@@ -583,20 +700,52 @@ class LCCP_Gateway extends WC_Payment_Gateway {
     }
 
     /**
-     * Get RPC URL for a network
+     * Get RPC URLs for a network (primary + fallback)
+     *
+     * Returns array of RPC URLs to try in order.
+     * Uses public RPC endpoints that don't require API keys.
+     *
+     * @param string $network_key Network identifier
+     * @return array Array of RPC URLs, empty if network not found
      */
-    private function get_rpc_url($network_key) {
+    private function get_rpc_urls($network_key) {
         $rpc_urls = array(
-            'sepolia' => 'https://ethereum-sepolia-rpc.publicnode.com',
-            'base_sepolia' => 'https://sepolia.base.org',
-            'optimism_sepolia' => 'https://sepolia.optimism.io',
-            'arbitrum_sepolia' => 'https://sepolia-rollup.arbitrum.io/rpc',
-            'ethereum' => 'https://eth.llamarpc.com',
-            'base' => 'https://mainnet.base.org',
-            'optimism' => 'https://mainnet.optimism.io',
-            'arbitrum' => 'https://arb1.arbitrum.io/rpc',
+            // Testnets
+            'sepolia' => array(
+                'https://ethereum-sepolia-rpc.publicnode.com',
+                'https://rpc.sepolia.org',
+            ),
+            'base_sepolia' => array(
+                'https://sepolia.base.org',
+                'https://base-sepolia.blockpi.network/v1/rpc/public',
+            ),
+            'optimism_sepolia' => array(
+                'https://sepolia.optimism.io',
+                'https://optimism-sepolia.blockpi.network/v1/rpc/public',
+            ),
+            'arbitrum_sepolia' => array(
+                'https://sepolia-rollup.arbitrum.io/rpc',
+                'https://arbitrum-sepolia.blockpi.network/v1/rpc/public',
+            ),
+            // Mainnets
+            'ethereum' => array(
+                'https://eth.llamarpc.com',
+                'https://ethereum.blockpi.network/v1/rpc/public',
+            ),
+            'base' => array(
+                'https://mainnet.base.org',
+                'https://base.blockpi.network/v1/rpc/public',
+            ),
+            'optimism' => array(
+                'https://mainnet.optimism.io',
+                'https://optimism.blockpi.network/v1/rpc/public',
+            ),
+            'arbitrum' => array(
+                'https://arb1.arbitrum.io/rpc',
+                'https://arbitrum.blockpi.network/v1/rpc/public',
+            ),
         );
-        return $rpc_urls[$network_key] ?? null;
+        return $rpc_urls[$network_key] ?? array();
     }
 
     /**
@@ -812,6 +961,58 @@ class LCCP_Gateway extends WC_Payment_Gateway {
         if (class_exists('WC_Logger')) {
             $logger = wc_get_logger();
             $logger->info($message, array('source' => 'layer-crypto-checkout'));
+        }
+    }
+
+    /**
+     * Log security events for audit trail
+     *
+     * Security events are always logged regardless of debug mode.
+     *
+     * @param string $event_type Event type (e.g., DUPLICATE_TX, UNDERPAYMENT)
+     * @param array $data Additional data to log
+     * @param int|null $order_id Optional order ID
+     */
+    private function log_security($event_type, $data = array(), $order_id = null) {
+        if (!class_exists('WC_Logger')) {
+            return;
+        }
+
+        $logger = wc_get_logger();
+
+        // Build log message
+        $message = sprintf(
+            '[%s] %s',
+            $event_type,
+            wp_json_encode($data, JSON_UNESCAPED_SLASHES)
+        );
+
+        if ($order_id) {
+            $message = sprintf('[Order #%d] %s', $order_id, $message);
+        }
+
+        // Add request context
+        $context = array(
+            'source' => 'lccp-security',
+        );
+
+        // Log as warning for security events
+        $logger->warning($message, $context);
+
+        // Also add order note if order_id provided
+        if ($order_id) {
+            $order = wc_get_order($order_id);
+            if ($order) {
+                $order->add_order_note(
+                    sprintf(
+                        /* translators: 1: event type, 2: event details */
+                        __('Security event [%1$s]: %2$s', 'layer-crypto-checkout'),
+                        $event_type,
+                        wp_json_encode($data, JSON_UNESCAPED_SLASHES)
+                    ),
+                    false // Not a customer note
+                );
+            }
         }
     }
 }
