@@ -305,6 +305,11 @@ function lccp_enqueue_scripts() {
         return;
     }
 
+    // Skip classic scripts on block checkout (blocks support handles its own scripts)
+    if (has_block('woocommerce/checkout')) {
+        return;
+    }
+
     // Get gateway settings
     $gateway = new LCCP_Gateway();
 
@@ -405,6 +410,11 @@ function lccp_enqueue_walletconnect() {
         return;
     }
 
+    // Skip on block checkout
+    if (has_block('woocommerce/checkout')) {
+        return;
+    }
+
     $gateway = new LCCP_Gateway();
     if ($gateway->enabled !== 'yes') {
         return;
@@ -436,6 +446,11 @@ add_action('wp_enqueue_scripts', 'lccp_enqueue_walletconnect', 5);
  */
 function lccp_add_walletconnect_config() {
     if (!is_checkout()) {
+        return;
+    }
+
+    // Skip on block checkout
+    if (has_block('woocommerce/checkout')) {
         return;
     }
 
