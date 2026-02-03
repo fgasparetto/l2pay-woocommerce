@@ -850,3 +850,16 @@ add_action('before_woocommerce_init', function() {
         \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility('custom_order_tables', __FILE__, true);
     }
 });
+
+/**
+ * Register payment method type for WooCommerce Block Checkout
+ */
+add_action('woocommerce_blocks_loaded', function() {
+    if (!class_exists('Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType')) {
+        return;
+    }
+    require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-blocks-support.php';
+    add_action('woocommerce_blocks_payment_method_type_registration', function($registry) {
+        $registry->register(new LCCP_Blocks_Support());
+    });
+});
