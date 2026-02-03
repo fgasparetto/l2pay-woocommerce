@@ -584,6 +584,14 @@
 
                 txHashRef.current = txHash;
                 setStatus('complete');
+
+                // Auto-submit the order after a short delay for UI update
+                setTimeout(function () {
+                    var placeOrderBtn = document.querySelector('.wc-block-components-checkout-place-order-button');
+                    if (placeOrderBtn) {
+                        placeOrderBtn.click();
+                    }
+                }, 500);
             } catch (err) {
                 console.error('LCCP Blocks: Payment error:', err);
                 setError(err.message || i18n.transactionFailed);
