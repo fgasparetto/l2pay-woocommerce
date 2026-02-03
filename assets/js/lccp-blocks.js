@@ -16,6 +16,8 @@
     var registerPaymentMethod = wc.wcBlocksRegistry.registerPaymentMethod;
     var decodeEntities = wp.htmlEntities.decodeEntities;
 
+    var select = wp.data.select;
+
     var data = lccpBlocksData;
     var i18n = data.i18n;
 
@@ -178,6 +180,37 @@
             txParams.gas = '0x50000';
         }
         return await provider.request({ method: 'eth_sendTransaction', params: [txParams] });
+    }
+
+    /* --- Validate checkout fields before sending tx --- */
+    function validateCheckoutFields() {
+        var store = select('wc/store/cart');
+        if (!store) return true; // can't validate, proceed
+
+        var customer = store.getCustomerData();
+        if (!customer) return true;
+
+        var missing = [];
+        var billing = customer.billingAddress || {};
+        var shipping = customer.shippingAddress || {};
+
+        // Email is always required
+        if (!billing.email || !billing.email.trim()) missing.push('email');
+
+        // Use shipping address if available, otherwise billing
+        var addr = shipping.address_1 ? shipping : billing;
+
+        if (!addr.first_name || !addr.first_name.trim()) missing.push('first name');
+        if (!addr.last_name || !addr.last_name.trim()) missing.push('last name');
+        if (!addr.address_1 || !addr.address_1.trim()) missing.push('address');
+        if (!addr.city || !addr.city.trim()) missing.push('city');
+        if (!addr.postcode || !addr.postcode.trim()) missing.push('postcode');
+        if (!addr.country || !addr.country.trim()) missing.push('country');
+
+        if (missing.length > 0) {
+            return 'Please fill in the required checkout fields before paying: ' + missing.join(', ') + '.';
+        }
+        return true;
     }
 
     /* ─── Content Component ──────────────────────────────────────── */
@@ -463,6 +496,13 @@
             }
 
             try {
+                // Validate checkout fields before sending irreversible tx
+                var fieldsCheck = validateCheckoutFields();
+                if (fieldsCheck !== true) {
+                    setError(fieldsCheck);
+                    return;
+                }
+
                 setStatus('processing');
                 setError('');
 
