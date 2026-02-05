@@ -302,7 +302,7 @@ add_filter('plugin_action_links_' . LCCP_PLUGIN_BASENAME, 'lccp_plugin_links');
  * Enqueue scripts for checkout
  */
 function lccp_enqueue_scripts() {
-    if (!is_checkout()) {
+    if (!function_exists('is_checkout') || !is_checkout()) {
         return;
     }
 
@@ -407,7 +407,7 @@ add_action('wp_enqueue_scripts', 'lccp_enqueue_scripts');
  * Enqueue WalletConnect scripts
  */
 function lccp_enqueue_walletconnect() {
-    if (!is_checkout()) {
+    if (!function_exists('is_checkout') || !is_checkout()) {
         return;
     }
 
@@ -446,7 +446,7 @@ add_action('wp_enqueue_scripts', 'lccp_enqueue_walletconnect', 5);
  * Add WalletConnect configuration via wp_add_inline_script
  */
 function lccp_add_walletconnect_config() {
-    if (!is_checkout()) {
+    if (!function_exists('is_checkout') || !is_checkout()) {
         return;
     }
 
