@@ -264,9 +264,13 @@ function lccp_init() {
         return;
     }
 
-    // Load the TX Hash idempotency class and ensure table exists
+    // Load the TX Hash idempotency class
     require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-txhash.php';
-    LCCP_TxHash::create_table();
+
+    // Only run create_table when DB version changes (upgrades)
+    if (get_option('lccp_txhash_db_version') !== '1.0') {
+        LCCP_TxHash::create_table();
+    }
 
     // Load the gateway class
     require_once LCCP_PLUGIN_DIR . 'includes/class-lccp-gateway.php';

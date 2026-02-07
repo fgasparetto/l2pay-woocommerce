@@ -42,11 +42,12 @@ class LCCP_TxHash {
         $charset_collate = $wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE {$table_name} (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
             tx_hash VARCHAR(66) NOT NULL,
             order_id BIGINT UNSIGNED NOT NULL,
             network VARCHAR(50) NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY  (id),
             UNIQUE KEY tx_hash_unique (tx_hash)
         ) $charset_collate;";
 
